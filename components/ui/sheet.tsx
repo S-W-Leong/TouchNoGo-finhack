@@ -8,6 +8,7 @@ export function Sheet({
   title,
   subtitle,
   onClose,
+  variant = "side",
   children,
   wide,
 }: {
@@ -15,6 +16,7 @@ export function Sheet({
   title: string;
   subtitle?: string;
   onClose: () => void;
+  variant?: "side" | "modal";
   children: React.ReactNode;
   wide?: boolean;
 }) {
@@ -30,8 +32,8 @@ export function Sheet({
         onClick={onClose}
         type="button"
       />
-      <div className={clsx("sheet-panel", wide && "sheet-panel-wide")}>
-        <div className="sheet-card p-5 md:p-6">
+      <div className={variant === "modal" ? "sheet-modal-panel" : "sheet-panel"}>
+        <div className={`sheet-card ${variant === "modal" ? "sheet-card-modal" : ""} p-5 md:p-6`}>
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow mb-1">Detail panel</p>

@@ -12,7 +12,7 @@ export interface ApplyActionInput {
   override?: boolean;
 }
 
-export function applyCaseAction(input: ApplyActionInput) {
+export async function applyCaseAction(input: ApplyActionInput) {
   const record = getCaseFromState(input.caseId);
 
   if (!record) {
@@ -50,7 +50,7 @@ export function applyCaseAction(input: ApplyActionInput) {
     input.action !== "ALLOW",
   );
 
-  ensurePromptForAction(record);
+  await ensurePromptForAction(record);
   upsertCaseInState(record);
 
   return record;
@@ -85,8 +85,26 @@ function mapResolutionState(action: CaseRecord["recommendation"]["action"]): Cas
 }
 
 function buildExportNote(record: CaseRecord, input: ApplyActionInput) {
-  const reasonSuffix = input.override && input.reason ? ` Override reason: ${input.reason}.` : "";
-  return `${record.caseId}: ${formatAction(input.action)} applied.${reasonSuffix} Current resolution state: ${mapResolutionState(input.action)}.`;
+  const resolutionState = formatAction(mapResolutionState(input.action));
+  const followUp = record.missingData.slice(0, 2);
+
+  return [
+    `## ${record.caseId}`,
+    "",
+    "### Status",
+    `- Action applied: ${formatAction(input.action)}`,
+    `- Resolution state: ${resolutionState}`,
+    `- Control state: ${record.currentControlState}`,
+    "",
+    "### Why",
+    ...record.facts.slice(0, 3).map((fact) => `- ${fact}`),
+    ...record.networkObservations.slice(0, 2).map(
+      (observation) =>
+        `- IP ${observation.ipAddress} is ${observation.disposition.toLowerCase()} with ${observation.reputation.toLowerCase()} reputation.`,
+    ),
+    ...(input.override && input.reason ? ["", "### Override", `- ${input.reason}`] : []),
+    ...(followUp.length > 0 ? ["", "### Follow-up", ...followUp.map((item) => `- ${item}`)] : []),
+  ].join("\n");
 }
 
 function formatAction(action: string) {

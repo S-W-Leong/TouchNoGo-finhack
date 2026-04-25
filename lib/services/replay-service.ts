@@ -1,6 +1,7 @@
 import type { ControlsWorkspace, RuleDefinition } from "@/lib/domain/schema";
 import { getDemoData, replaceDemoData } from "@/lib/demo-state/store";
 import { simulateReplay } from "@/lib/replay/simulate";
+import { buildRuleExpression } from "@/lib/rules/rule-builder";
 
 export interface ReplayPreview {
   badCasesCaught: number;
@@ -10,13 +11,27 @@ export interface ReplayPreview {
 
 export function saveRuleDraft(ruleId: string, nextRule: RuleDefinition) {
   const data = getDemoData();
+  const hasExistingRule = data.controls.rules.some((rule) => rule.ruleId === ruleId);
   const nextData = {
     ...data,
     controls: {
       ...data.controls,
-      rules: data.controls.rules.map((rule) =>
-        rule.ruleId === ruleId ? structuredClone(nextRule) : rule,
-      ),
+      rules: hasExistingRule
+        ? data.controls.rules.map((rule) =>
+            rule.ruleId === ruleId
+              ? structuredClone({
+                  ...nextRule,
+                  lastEditedAt: new Date().toISOString(),
+                })
+              : rule,
+          )
+        : [
+            structuredClone({
+              ...nextRule,
+              lastEditedAt: new Date().toISOString(),
+            }),
+            ...data.controls.rules,
+          ],
       draftRule: buildRuleExpression(nextRule),
     },
   };
@@ -54,10 +69,4 @@ export function replayRule(workspace: ControlsWorkspace, rule: RuleDefinition) {
   );
 
   return { metrics, scenarios };
-}
-
-export function buildRuleExpression(rule: RuleDefinition) {
-  return `${rule.action} if ${rule.conditions
-    .map((condition) => `:${condition.variableName} ${condition.operator} ${condition.value}`)
-    .join(" and ")}`;
 }

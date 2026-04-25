@@ -30,7 +30,18 @@ export function resolveCaseFromReply(caseId: string, inboundEventId: string) {
   record.status = "RESOLVED";
   record.resolutionState = "REACTIVATED";
   record.currentControlState = "REACTIVATED";
-  record.exportNote = `${record.caseId}: User replied /tng-login. Account reactivated after re-verification.`;
+  record.exportNote = [
+    `## ${record.caseId}`,
+    "",
+    "### Status",
+    "- User replied `/tng-login`",
+    "- Resolution state: Reactivated",
+    "- Control state: REACTIVATED",
+    "",
+    "### Outcome",
+    "- Re-verification was completed from the customer flow.",
+    "- The case auto-resolved without analyst escalation.",
+  ].join("\n");
 
   appendAuditEvent(
     record,
@@ -69,7 +80,18 @@ export function expirePromptForCase(caseId: string) {
   record.status = "RESOLVED";
   record.resolutionState = "ESCALATED";
   record.currentControlState = "ESCALATED";
-  record.exportNote = `${record.caseId}: Prompt expired without user reply. Escalated for manual review.`;
+  record.exportNote = [
+    `## ${record.caseId}`,
+    "",
+    "### Status",
+    "- Prompt expired without `/tng-login` reply",
+    "- Resolution state: Escalated",
+    "- Control state: ESCALATED",
+    "",
+    "### Outcome",
+    "- The seeded response window elapsed with no customer confirmation.",
+    "- Manual review is now required.",
+  ].join("\n");
 
   appendAuditEvent(
     record,
@@ -132,7 +154,11 @@ function normalizePromptStatus(nextStatus: string): CaseRecord["prompt"]["state"
     return "FAILED";
   }
 
-  if (lowered === "sent" || lowered === "queued") {
+  if (lowered === "queued" || lowered === "accepted") {
+    return "PENDING_SEND";
+  }
+
+  if (lowered === "sending" || lowered === "sent") {
     return "SENT";
   }
 

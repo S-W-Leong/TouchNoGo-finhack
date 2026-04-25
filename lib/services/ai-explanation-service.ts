@@ -1,13 +1,25 @@
 import type { CaseRecord } from "@/lib/domain/schema";
 import { canAttemptAlibaba } from "@/lib/config/env";
 import { createAlibabaCompletion } from "@/lib/integrations/alibaba-modelstudio";
+import { renderPromptTemplate } from "@/lib/prompts/template-loader";
 
 export async function generateCaseExplanation(record: CaseRecord) {
   const fallback = [
-    `${record.caseId} is high-risk because ${record.reasonChips.slice(0, 3).join(", ")} happened in a tight sequence.`,
-    `The most important facts are: ${record.facts.join(" ")}`,
-    `Recommended action remains ${record.recommendation.action} because the policy chain and score components are already aligned.`,
-  ].join(" ");
+    "## Case",
+    `- ${record.caseId} is high-risk because ${record.reasonChips.slice(0, 3).join(", ")} occurred in a tight sequence.`,
+    "",
+    "## Key facts",
+    ...record.facts.slice(0, 5).map((fact) => `- ${fact}`),
+    ...record.networkObservations.slice(0, 2).map((observation) =>
+      `- IP ${observation.ipAddress} is ${observation.disposition.toLowerCase()} with ${observation.reputation.toLowerCase()} reputation (${observation.label}).`,
+    ),
+    "",
+    "## Assessment",
+    `${record.aiInferences[0] ?? "Signals align with a high-confidence fraud pattern."}`,
+    "",
+    "## Action",
+    `${formatAction(record.recommendation.action)} remains the recommended action because the evidence and policy path already align.`,
+  ].join("\n");
 
   if (!canAttemptAlibaba()) {
     return fallback;
@@ -17,36 +29,53 @@ export async function generateCaseExplanation(record: CaseRecord) {
     const completion = await createAlibabaCompletion([
       {
         role: "system",
-        content:
-          "You are a fraud operations copilot. Explain the case using only the facts provided. Keep it concise, evidence-backed, and operational.",
+        content: renderPromptTemplate("ai/explanation/system.md", {}),
       },
       {
         role: "user",
-        content: JSON.stringify(
-          {
-            caseId: record.caseId,
-            maskedUserLabel: record.maskedUserLabel,
-            score: record.score,
-            facts: record.facts,
-            aiInferences: record.aiInferences,
-            recommendation: record.recommendation.action,
-            policyIds: record.policyHits.map((hit) => hit.policyId),
-            evidenceIds: record.evidenceItems.map((item) => item.evidenceId),
-          },
-          null,
-          2,
-        ),
+        content: renderPromptTemplate("ai/explanation/user.md", {
+          case_id: record.caseId,
+          user_label: record.maskedUserLabel,
+          score: record.score,
+          recommended_action: formatAction(record.recommendation.action),
+          prompt_state: formatAction(record.prompt.state),
+          resolution_state: formatAction(record.resolutionState),
+          facts_bullets: toBulletList([
+            ...record.facts,
+            ...record.networkObservations.map(
+              (observation) =>
+                `IP ${observation.ipAddress} | ${observation.geoLabel} | ${observation.label} | ${observation.disposition.toLowerCase()}`,
+            ),
+          ]),
+          inferences_bullets: toBulletList(record.aiInferences),
+          evidence_ids_bullets: toBulletList(record.evidenceItems.map((item) => item.evidenceId)),
+          policy_ids_bullets: toBulletList(record.policyHits.map((hit) => hit.policyId)),
+        }),
       },
     ]);
 
-    return completion?.trim() || fallback;
+    return normalizeMarkdownOutput(completion?.trim(), fallback);
   } catch {
     return fallback;
   }
 }
 
 export async function draftCaseNote(record: CaseRecord) {
-  const fallback = `${record.caseId}: ${record.recommendation.action} applied. Prompt state ${record.prompt.state}. Resolution ${record.resolutionState}.`;
+  const fallback = [
+    "## Decision",
+    `- Action: ${formatAction(record.recommendation.action)}`,
+    `- Prompt: ${formatAction(record.prompt.state)} | Resolution: ${formatAction(record.resolutionState)}`,
+    "",
+    "## Why",
+    ...record.facts.slice(0, 4).map((fact) => `- ${fact}`),
+    ...record.networkObservations.slice(0, 2).map((observation) =>
+      `- IP ${observation.ipAddress} was ${observation.disposition.toLowerCase()} with ${observation.reputation.toLowerCase()} reputation.`,
+    ),
+    "",
+    "## Follow-up",
+    `- Keep support and compliance aligned to ${record.caseId}.`,
+    `- Reference the current control state: ${record.currentControlState}.`,
+  ].join("\n");
 
   if (!canAttemptAlibaba()) {
     return fallback;
@@ -56,28 +85,55 @@ export async function draftCaseNote(record: CaseRecord) {
     const completion = await createAlibabaCompletion([
       {
         role: "system",
-        content:
-          "Draft a short support and compliance handoff note. Keep it precise. Use only the facts provided.",
+        content: renderPromptTemplate("ai/draft-note/system.md", {}),
       },
       {
         role: "user",
-        content: JSON.stringify(
-          {
-            caseId: record.caseId,
-            facts: record.facts,
-            suspiciousActions: record.suspiciousActions,
-            recommendation: record.recommendation.action,
-            promptState: record.prompt.state,
-            resolutionState: record.resolutionState,
-          },
-          null,
-          2,
-        ),
+        content: renderPromptTemplate("ai/draft-note/user.md", {
+          case_id: record.caseId,
+          recommended_action: formatAction(record.recommendation.action),
+          prompt_state: formatAction(record.prompt.state),
+          resolution_state: formatAction(record.resolutionState),
+          facts_bullets: toBulletList([
+            ...record.facts,
+            ...record.networkObservations.map(
+              (observation) =>
+                `IP ${observation.ipAddress} | ${observation.geoLabel} | ${observation.label} | ${observation.disposition.toLowerCase()}`,
+            ),
+          ]),
+          suspicious_actions_bullets: toBulletList(
+            record.suspiciousActions.map((action) => `${action.label}: ${action.note}`),
+          ),
+        }),
       },
     ]);
 
-    return completion?.trim() || fallback;
+    return normalizeMarkdownOutput(completion?.trim(), fallback);
   } catch {
     return fallback;
   }
+}
+
+function toBulletList(values: string[]) {
+  if (values.length === 0) {
+    return "- None";
+  }
+
+  return values.map((value) => `- ${value}`).join("\n");
+}
+
+function formatAction(value: string) {
+  return value.replaceAll("_", " ").toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function normalizeMarkdownOutput(content: string | undefined, fallback: string) {
+  if (!content) {
+    return fallback;
+  }
+
+  if (content.includes("## ")) {
+    return content;
+  }
+
+  return fallback;
 }

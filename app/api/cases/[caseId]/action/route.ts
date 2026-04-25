@@ -16,7 +16,7 @@ export async function POST(
 ) {
   const { caseId } = await context.params;
   const body = applyActionSchema.parse(await request.json());
-  const record = applyCaseAction({
+  const record = await applyCaseAction({
     caseId,
     action: body.action ?? "FREEZE_ACCOUNT",
     actorName: body.actor,

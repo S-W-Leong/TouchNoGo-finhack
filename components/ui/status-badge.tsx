@@ -14,6 +14,7 @@ const toneMap = {
   SENT:                  "border-[#bae6fd] bg-[#f0f9ff] text-[#0369a1]",
   PENDING_SEND:          "border-[#cbd5e1] bg-[#f8fafc] text-[#475569]",
   FAILED:                "border-[#fda29b] bg-[#fef3f2] text-[#b42318]",
+  SIMULATED:             "border-[#e5e7eb] bg-[#f8fafc] text-[#475569]",
   USER_REPLIED_TNG_LOGIN:"border-[#bbf7d0] bg-[#f0fdf4] text-[#15803d]",
   EXPIRED:               "border-[#fecaca] bg-[#fef2f2] text-[#b91c1c]",
   PENDING_USER:          "border-[#fde68a] bg-[#fffbeb] text-[#b45309]",

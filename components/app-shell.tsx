@@ -74,8 +74,8 @@ export function AppShell({
             </nav>
 
             <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--muted-strong)]">
-              <span className="mono">seed demo-core-v1</span>
-              <span>Decisioning remains deterministic. Human override stays visible.</span>
+              <span className="mono">seed demo-core-v2</span>
+              <span>Seeded demo. Analyst override stays available.</span>
             </div>
           </div>
         </div>
