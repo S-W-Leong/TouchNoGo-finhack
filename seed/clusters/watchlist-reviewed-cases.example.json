@@ -1,0 +1,145 @@
+{
+  "cluster_id": "CLUSTER-WLP-001",
+  "scenario_family": "WATCHLIST_PAYOUT",
+  "objective": "Find a reviewable hold rule for near-watchlist cross-border payouts without overfitting to one corridor or one beneficiary country.",
+  "reviewed_cases": [
+    {
+      "case_id": "CASE-WLP-001",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "HOLD",
+      "watchlist_similarity": 0.89,
+      "amount_to_30d_avg_ratio": 9.44,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 5,
+      "wallet_inactive_days": 46,
+      "linked_prior_case": true
+    },
+    {
+      "case_id": "CASE-WLP-002",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "HOLD",
+      "watchlist_similarity": 0.91,
+      "amount_to_30d_avg_ratio": 6.1,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 8,
+      "wallet_inactive_days": 33,
+      "linked_prior_case": false
+    },
+    {
+      "case_id": "CASE-WLP-003",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "ESCALATE",
+      "watchlist_similarity": 0.9,
+      "amount_to_30d_avg_ratio": 4.8,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 2,
+      "wallet_inactive_days": 72,
+      "linked_prior_case": true
+    },
+    {
+      "case_id": "CASE-WLP-004",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "HOLD",
+      "watchlist_similarity": 0.88,
+      "amount_to_30d_avg_ratio": 5.2,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 13,
+      "wallet_inactive_days": 41,
+      "linked_prior_case": false
+    },
+    {
+      "case_id": "CASE-WLP-005",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "HOLD",
+      "watchlist_similarity": 0.92,
+      "amount_to_30d_avg_ratio": 7.9,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 20,
+      "wallet_inactive_days": 58,
+      "linked_prior_case": true
+    },
+    {
+      "case_id": "CASE-WLP-006",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "STEP_UP",
+      "watchlist_similarity": 0.87,
+      "amount_to_30d_avg_ratio": 4.3,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 6,
+      "wallet_inactive_days": 37,
+      "linked_prior_case": false
+    },
+    {
+      "case_id": "CASE-WLP-007",
+      "review_label": "TRUE_POSITIVE",
+      "final_action": "HOLD",
+      "watchlist_similarity": 0.9,
+      "amount_to_30d_avg_ratio": 10.2,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 3,
+      "wallet_inactive_days": 81,
+      "linked_prior_case": true
+    },
+    {
+      "case_id": "CASE-WLP-008",
+      "review_label": "FALSE_POSITIVE",
+      "final_action": "ALLOW",
+      "watchlist_similarity": 0.9,
+      "amount_to_30d_avg_ratio": 1.8,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": false,
+      "device_age_hours": 240,
+      "wallet_inactive_days": 3,
+      "linked_prior_case": false
+    },
+    {
+      "case_id": "CASE-WLP-009",
+      "review_label": "FALSE_POSITIVE",
+      "final_action": "ALLOW",
+      "watchlist_similarity": 0.86,
+      "amount_to_30d_avg_ratio": 4.5,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 144,
+      "wallet_inactive_days": 2,
+      "linked_prior_case": false
+    },
+    {
+      "case_id": "CASE-WLP-010",
+      "review_label": "BENIGN_BUT_REVIEWED",
+      "final_action": "STEP_UP",
+      "watchlist_similarity": 0.88,
+      "amount_to_30d_avg_ratio": 3.2,
+      "is_cross_border": true,
+      "is_first_payout_to_beneficiary": true,
+      "device_age_hours": 4,
+      "wallet_inactive_days": 64,
+      "linked_prior_case": false
+    }
+  ],
+  "common_patterns": {
+    "cross_border_true": 10,
+    "first_payout_to_beneficiary_true": 8,
+    "watchlist_similarity_gte_0_88": 8,
+    "amount_ratio_gte_4_0": 8,
+    "device_age_hours_lte_24": 8,
+    "wallet_inactive_days_gte_30": 8
+  },
+  "excluded_patterns": [
+    {
+      "field": "beneficiary.country",
+      "reason": "Support is spread across multiple corridors and not strong enough to justify a country-specific rule."
+    },
+    {
+      "field": "device.model",
+      "reason": "Specific device models appear in too few cases and would overfit."
+    }
+  ]
+}

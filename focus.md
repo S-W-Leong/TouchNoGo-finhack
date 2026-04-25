@@ -155,6 +155,7 @@ Key interactions:
 - change one threshold or condition
 - rerun the replay
 - compare before vs after
+- optionally generate one draft rule from reviewed anomalies, then replay it before saving
 
 What not to do:
 
@@ -373,6 +374,7 @@ Deterministic:
 - next-action recommendation
 - policy reasoning in plain English
 - note drafting
+- draft one candidate rule from reviewed anomalies, but only as a human-reviewed replayable draft
 
 ### AI should not do
 

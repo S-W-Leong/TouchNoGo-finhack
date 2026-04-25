@@ -1,0 +1,50 @@
+{
+  "scenario_type": "WATCHLIST_PAYOUT",
+  "title": "Near-watchlist cross-border payout",
+  "narrative": "A dormant wallet reactivates and attempts a first cross-border payout to a beneficiary whose alias closely matches a watchlist entry.",
+  "must_have_signals": [
+    "new_device",
+    "wallet_reactivated",
+    "first_cross_border_payout_to_beneficiary",
+    "beneficiary_name_similarity_warning",
+    "amount_spike_vs_baseline"
+  ],
+  "variable_ranges": {
+    "transaction.amount_myr": [
+      7000,
+      25000
+    ],
+    "transaction.amount_to_30d_avg_ratio": [
+      4.0,
+      12.0
+    ],
+    "beneficiary.watchlist_similarity": [
+      0.86,
+      0.93
+    ],
+    "device.age_hours": [
+      1,
+      24
+    ],
+    "wallet.inactive_days": [
+      30,
+      120
+    ]
+  },
+  "default_recommendation": "HOLD",
+  "allowed_actions": [
+    "STEP_UP",
+    "HOLD",
+    "ESCALATE"
+  ],
+  "replay_knobs": [
+    "watchlist_similarity_warning",
+    "amount_to_30d_avg_hold_ratio"
+  ],
+  "generation_guardrails": [
+    "Do not hard-code one beneficiary country into the rule suggestion.",
+    "Do not use one device model as a risk condition.",
+    "Do not generate cases where every signal is extreme.",
+    "Keep at least one ambiguous element so the human override remains meaningful."
+  ]
+}
