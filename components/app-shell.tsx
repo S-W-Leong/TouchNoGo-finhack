@@ -33,7 +33,7 @@ export function AppShell({
               </div>
 
               <div>
-                <p className="text-[15px] font-semibold tracking-tight">TNG RiskOps Agent</p>
+                <p className="text-[15px] font-semibold tracking-tight">RO/A</p>
                 <p className="text-sm text-[var(--muted-strong)]">
                   Account takeover operations workspace
                 </p>

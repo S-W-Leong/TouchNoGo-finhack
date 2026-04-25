@@ -1,83 +1,184 @@
-# TNG RiskOps Agent
+# RO/A
 
-## Current Call
+**RiskOps / Agent — TNG Digital FINHACK 2026, Security & Fraud track**
 
-- Track: `Security & Fraud`
-- Product: `AI-native pre-payout decision workspace for fraud + AML ops`
-- Hero replay: `watchlist-payout`, the watchlist threshold tradeoff replay
-- Wedge: `evidence graph + specialist agents + human action rail + replay lab`
+An AI-assisted analyst workspace for account takeover detection, investigation, and intervention — built so a fraud analyst can review what AI couldn't decide on its own, approve an action in one click, and let the system carry out the rest of the post-detection workflow automatically.
 
-One-line pitch:
+---
 
-`TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
+## Project Description
 
-This repo is past ideation.
+### The problem
 
-Do not build:
+Fraud operations teams spend most of their day on the *boring half* of fraud handling — not detecting threats, but executing the manual workflow that follows a detection. After an alert fires, an analyst typically has to:
 
-- another flat alert queue
-- a generic AML screening homepage
-- a black-box score with no evidence
-- a graph tab with no action
-- multi-cloud theater
+- read scattered raw logs and stitch together a timeline by hand
+- copy evidence into a case note
+- decide whether to freeze, step up, or release the account
+- manually go and freeze the account in another tool
+- manually contact the user to re-verify
+- manually update the case status when the user responds
 
-## Build Order
+A high portion of these steps could be automated, but most fraud platforms stop at the score and leave the action layer to humans.
 
-Build in this order. Stop adding scope when the earlier item is still weak.
+### Our solution
 
-1. End-to-end hero case that ends in a visible pre-payout action.
-   Build: seeded alert -> evidence -> recommendation -> human `hold`, `step-up`, or `escalate` -> export note.
-   Why: if the case never reaches a decision, the product story fails.
-2. One-screen investigation workspace.
-   Build: facts, AI inferences, evidence timeline, linked entities, triggered controls, missing info, analyst notes, action rail.
-   Why: this is the core fraud-ops pain.
-3. Evidence-backed recommendation with human approval.
-   Build: specialist agents, policy citations, confidence, rationale, and grounded note drafting.
-   Why: this is the cleanest AI story and the most believable one.
-4. Purposeful multi-cloud split.
-   Build: app and seeded data on one cloud, AI or replay on the second cloud, with one sentence judges can remember.
-   Why: it is a hard judging requirement.
-5. Replay lab for one policy tradeoff.
-   Build: current threshold, stricter threshold, caught bad payments, delayed good payments.
-   Why: it is the sharpest differentiator and something real fraud ops teams want.
-6. Queue ranking and one backup case.
-   Build: reason chips, risk level, next action, second scenario for Q&A.
-   Why: good realism, but not before the hero case works.
-7. Thin customer step-up moment only if the first six are solid.
-   Why: it helps the "before money leaves" story, but it is easy to overscope.
+RO/A automates the **post-detection** workflow:
 
-## Immediate Decisions
+1. **Detection** — deterministic scoring on user behavior signals (login, device, geo, transaction attempts) produces a risk score and feature drivers.
+2. **Triage** — the queue ranks suspicious accounts, surfaces *why* with reason chips, and shows which detections are about to trigger automated action.
+3. **Investigation workspace** — one screen per case: behavior timeline, evidence, linked entities (entity risk graph), policy citations, AI-drafted recommendation, analyst action rail.
+4. **Decision** — for high-confidence cases the system fires an action automatically (freeze, review). For ambiguous cases the analyst approves with one click and one-line reason.
+5. **Customer prompt** — the system sends a WhatsApp message instructing the user to re-verify via `/tng-login`.
+6. **Auto-resolution** — when the user replies, the Twilio webhook flips the case to `REACTIVATED` or `BLOCKED` without analyst touch.
+7. **Replay Lab** — analysts can tighten a threshold, action band, or AI-suggested draft rule and replay the seeded dataset to see the tradeoff before shipping the change.
 
-1. Keep `Security & Fraud` unless the CTO gives a very strong reason to switch.
-2. Ask whether the hero case should stay `cross-border near-watchlist payout` or move to `dormant-wallet takeover`, `merchant QR abuse`, or `mule-ring collection`.
-3. Lock the multi-cloud split in one sentence and repeat that exact sentence in the deck and demo.
-4. Decide whether to stay internal-only or show one thin customer step-up moment after `hold` or `ask for more proof`.
+We are deliberately **not** trying to build a better fraud detection model. We are trying to remove the manual labour around what happens *after* a model fires — so analysts only spend judgement on cases that actually need judgement.
 
-## Read Order
+### Key features
 
-Read the repo in this order. Each file has one job.
+- **ATO Command Center** (`/queue`) — spike banner, ranked queue, reason chips, next-action preview
+- **Investigation workspace** (`/cases/[caseId]`) — behavior timeline, deterministic risk score with feature drivers, entity risk graph, evidence + policy citations, AI explanation, action rail with override-with-reason
+- **Automated action layer** — `FREEZE_ACCOUNT`, `REVIEW`, `STEP_UP` fire from policy without an analyst click on high-confidence paths
+- **WhatsApp re-verification flow** — real Twilio prompt, real reply webhook, real case-state transition
+- **Audit-ready case note export** — every recommendation cites evidence-IDs and policy-IDs
+- **Replay Lab** (`/controls`) — change a threshold or AI-drafted rule, replay the seeded dataset, see caught-bad vs delayed-good tradeoff
+- **Multi-cloud split with a real reason** — see below
 
-1. [README.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/README.md:1)
-   Use for: current call, build order, doc map.
-2. [AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md:1)
-   Use for: MVP scope, architecture, design contract, risk plan, demo plan, CTO questions, post-MVP backlog.
-3. [FRAUD_OPS_MARKET_RESEARCH_2026-04-25.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/FRAUD_OPS_MARKET_RESEARCH_2026-04-25.md:1)
-   Use for: vendor map, feature taxonomy, what real fraud ops teams want.
-4. [tng-doc-by-shiwei.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/tng-doc-by-shiwei.md:1)
-   Use for: event rules, judging, schedule, logistics, submission checklist.
+---
 
-## Repo Hygiene
+## Project Technical Details
 
-- Keep all data synthetic.
-- Do not publish the current `.env` contents as-is.
-- If this repo goes public, scrub secrets first and treat it as judge-facing.
+### Stack
 
-## Reusable Inputs
+| Layer | Choice |
+|---|---|
+| Framework | Next.js 15 (App Router, RSC + Client Components) |
+| Language | TypeScript |
+| UI | React 19, Tailwind CSS v4, lucide-react, react-markdown |
+| Graph | `@xyflow/react` for the entity risk network |
+| Validation | Zod schemas at every API boundary |
+| Testing | Vitest + Testing Library, jsdom |
+| Hosting | AWS Amplify (CI/CD from GitHub `main`) |
+| LLM | Alibaba Cloud Model Studio (Bailian) — Qwen, via OpenAI-compatible endpoint |
+| Messaging | Twilio WhatsApp (outbound prompt + inbound reply webhook) |
 
-- [Fraud notes 1](https://www.bryanslab.com/blogs/fraud-2/)
-- [Fraud notes 2](https://www.bryanslab.com/blogs/fraud-ml/)
+### Architecture
 
-## Seed Data References
+We deliberately kept the architecture small and honest for a 2-day hackathon. There is no database, no event bus, no message queue. The Next.js app is the entire system; state lives in versioned JSON files served from the same Amplify deployment.
 
-- [IBM AMLSim example dataset](https://www.kaggle.com/datasets/anshankul/ibm-amlsim-example-dataset/data?select=alerts.csv)
-- [Fraudulent transactions dataset](https://www.kaggle.com/datasets/chitwanmanchanda/fraudulent-transactions-data)
+```
+                        ┌─────────────────────────────────────────┐
+   Fraud Analyst ─HTTPS▶│ AWS Amplify — Next.js 15                │
+                        │                                          │
+                        │  Frontend pages                          │
+                        │   /queue   /cases/[id]   /controls       │
+                        │                                          │
+                        │  API routes (app/api/*)                  │
+                        │   /api/cases/[caseId]/{action,override,  │
+                        │     prompt,draft-note,generate-          │
+                        │     explanation,report}                  │
+                        │   /api/controls/{config,replay,          │
+                        │     generate-rule}                       │
+                        │   /api/webhooks/twilio                   │
+                        │                                          │
+                        │  Service layer (lib/services/*)          │
+                        │   case · queue · action-orchestrator ·   │
+                        │   prompt · resolution · replay · report  │
+                        │   ai-explanation · rule-generator        │
+                        │                                          │
+                        │  Repository (lib/repositories/*)         │
+                        │   single read/write surface over         │
+                        │   demo-core.json + runtime-state.json    │
+                        └────────┬─────────────────────┬───────────┘
+                                 │                     │
+                       LLM call  │                     │ WhatsApp
+                                 ▼                     ▼
+                  ┌────────────────────┐    ┌──────────────────┐
+                  │ Alibaba Cloud      │    │ Twilio           │
+                  │ Model Studio       │    │ WhatsApp + reply │
+                  │ (Qwen, Bailian)    │    │ webhook          │
+                  └────────────────────┘    └──────────────────┘
+```
+
+A more detailed diagram lives at [docs/architecture.drawio](docs/architecture.drawio).
+
+### Multi-cloud split — one judge sentence
+
+> **AWS Amplify hosts the investigation system of record. Alibaba Model Studio is the AI analyst that explains behavior and drafts rules.**
+
+Every AI call (case explanation, draft rule generation) crosses to Alibaba via `lib/integrations/alibaba-modelstudio.ts`. Everything else — the deterministic score, the action orchestrator, the audit log, the replay engine — runs in-process inside the Amplify-hosted Next.js app.
+
+### Approach
+
+- **Deterministic before AI.** The risk score, action ladder, and replay are all rule-based and reproducible by seed. AI is layered on top for *explanation*, *recommendation rationale*, and *draft rule suggestions* — never as the source of truth.
+- **Repository boundary.** All state goes through `lib/repositories/risk-ops-repository.ts`. The seed JSON is swappable for a real database later without changing service code.
+- **Zod at the edge.** Every API route validates input with Zod; the same schemas are reused on the client.
+- **No mocked AI.** The Alibaba LLM calls and the Twilio WhatsApp prompts are real, not stubbed. The reply webhook actually advances case state.
+- **Synthetic data only.** PII is masked at the seed layer. The repo is treated as judge-facing.
+
+### Repository layout
+
+```
+app/                        Next.js App Router (pages + API routes)
+components/                 UI shell and route screens
+lib/
+  domain/                   typed contracts (Case, Alert, Score, Policy…)
+  repositories/             single read/write surface over JSON state
+  services/                 in-process business logic
+  integrations/             alibaba-modelstudio.ts, twilio-client.ts
+  prompts/                  LLM prompt templates
+  rules/                    deterministic scoring + policy logic
+  seed/                     demo-core.json (read-only) + runtime-demo-state.json (mutable)
+docs/                       architecture, plans, brainstorms
+tests/                      vitest unit + integration tests
+```
+
+### Run locally
+
+Requires Node.js 20.19+ and npm 10+. Setup details live in [setup.md](setup.md).
+
+```bash
+cp .env.example .env        # fill in TWILIO_* and ALIBABA_* if you want the real integrations
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000/queue`, then walk a case from `/cases/CASE-ATO-001`, then visit `/controls` for the Replay Lab.
+
+Quality gates:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+---
+
+## Project Inspiration & Problem Statement
+
+Our teammate Bryan works in fraud detection and has been studying the space for a while. And after speaking with one of the mentors who worked in this domain, Zenny, we reached a consensus on a frustration that bugged analysts: a huge chunk of what happens after a fraud alert could be done by AI — summarising the case, citing the policy, drafting the note — and the actions that follow a decision (freezing the fraudster's account, contacting the user, updating the case) should be automated rather than clicked through by a human.
+
+So we built TNG RiskOps Agent around that gap. The premise is simple:
+
+- Let AI handle the cases it can clearly explain and decide on.
+- Surface the rest to an analyst with all the evidence in one place, so the analyst's job becomes *approve* rather than *investigate from scratch*.
+- After the decision, automate every downstream step — freeze the account, prompt the user, wait for the reply, resolve the case — instead of asking the analyst to do them by hand.
+
+We are not aiming to build a foolproof fraud detection model. We are aiming to **automate the manual workflow of a risk-ops analyst as much as possible, especially the post-detection flow** — so analysts spend their time on judgement, not on repetitive actions a system could carry out for them.
+
+---
+
+## Team
+
+TouchnoGo — TNG Digital FINHACK 2026, Grand Summit, Connexion KL.
+
+## For the team
+
+Internal scope, build order, and doc map: [docs/internal-strategy.md](docs/internal-strategy.md).
+
+## Disclaimer
+
+All data is synthetic. Hackathon prototype — not production fraud infrastructure.

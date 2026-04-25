@@ -16,7 +16,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TNG RiskOps Agent",
+  title: "RO/A",
   description: "Seeded-mode, UI-first ATO detection-to-action orchestration demo.",
 };
 
