@@ -23,6 +23,30 @@ Pitch the layer above them:
 
 Short version: move from `alert -> analyst queue` to `alert -> investigation -> action -> report -> replay`.
 
+## Rubric Guardrails (Day 1 Judging Notes)
+
+1. **AI must be justified.**
+   - Do not add LLMs everywhere.
+   - Use AI where it helps with evidence assembly, action recommendation, policy reasoning, report drafting, or replay tradeoffs.
+   - Use deterministic rules where deterministic rules are stronger.
+
+2. **The prototype must survive follow-up.**
+   - A strong first 30 seconds means nothing if the second click breaks.
+   - Edge cases, degraded states, and security posture matter.
+
+3. **Two clouds must do real work.**
+   - One cloud for the app and seeded data, another for AI or replay is fine if the split has a real reason.
+   - Cosmetic multi-cloud loses.
+
+4. **Impact has to be real and visible fast.**
+   - The real user is the fraud or AML analyst.
+   - The pain is a risky flow that needs a decision before payout.
+   - The demo must make that pain and intervention obvious in under 4 minutes.
+
+5. **Presentation is load-bearing.**
+   - Clean deck, clean README, one sharp case, one sharp replay story.
+   - No feature stuffing.
+
 ## Strongest Challenge To The Original Direction
 
 Original direction:
@@ -159,6 +183,8 @@ One-line pitch:
 - grounded in a real operator pain: too many alerts, too much manual triage, too much report writing
 - looks new because it compresses analyst work, not because it adds another chart
 - easy to demo with fake data and fake policy packs
+- easier to defend under Q&A because the AI is doing reasoning and assembly work, not pretending to be a magic fraud oracle
+- naturally supports a purposeful two-cloud story if the app and AI/replay workloads are split cleanly
 
 ### User
 
@@ -719,8 +745,9 @@ Magical moment:
 3. Show three agents agreeing or disagreeing on the next step.
 4. Show the policy reason for `HOLD` or `ESCALATE`.
 5. Export the case note or SAR-style draft.
-6. Switch to Scenario Lab and replay a mule-ring or dormant-wallet takeover.
+6. Switch to Scenario Lab and replay the `watchlist-payout` threshold tradeoff first.
 7. Change one threshold or policy value and rerun.
+8. If there is still time, show a second scenario such as `dormant-wallet takeover` or `merchant / mule-ring abuse`.
 
 ## Deferred To TODOS.md
 

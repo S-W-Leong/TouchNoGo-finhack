@@ -1,152 +1,137 @@
-# TNG Digital FinHack Notes
+# TNG RiskOps Agent
 
-## Hackathon
+Current call for this repo:
 
-- Event: [TNG Digital FinHack](https://www.tngdigitalfinhack.com/)
-- Format mentioned in chat:
-  - teams of 5
-  - 2 days, 1 night
-  - day 1: 24-hour build
-  - day 2: pitch and finals
-  - physical event at Connexion, Bangsar South
-  - Malaysian citizens only
+- Track: `Security & Fraud`
+- Product: `AI-native pre-payout decision workspace for fraud + AML ops`
+- Hero case: `case-301` in [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1352)
+- Hero replay: `watchlist-payout`
+- Winning wedge: `evidence graph + specialist agents + human action rail + replay lab`
 
-## Tracks
+This repo is no longer "which idea should we do?" territory.
 
-1. Security and Fraud
-2. Financial Inclusion
-3. Innovation
+It already has a direction:
 
-## Theme from chat
+1. do **not** pitch another flat alert queue
+2. do **not** pitch generic AML screening as the whole product
+3. pitch the layer **above** existing controls, where analysts decide whether to `step-up`, `hold`, `escalate`, or export a report before money leaves
 
-- Build a secure, AI-driven eWallet platform that:
-  - improves payment transparency
-  - automates regulatory compliance
-  - gives real-time financial insights to users and regulators
+## Why This Can Win
 
-## Deliverables from chat
+### 1. AI & Intelligent Systems
+- Use the right AI for the right job.
+- No LLM theater.
+- The strongest AI story here is evidence linking, action recommendation, policy reasoning, report drafting, and replaying policy tradeoffs.
+- If a deterministic rule is better, say so.
 
-- GitHub repo
-- pitch deck
-- 4-minute demo video
-- prototype
+### 2. Technical Implementation
+- A beautiful first 30 seconds that collapses under Q&A loses.
+- The prototype has to survive edge cases, seeded scenario changes, and security questions.
+- The strongest technical path is one seeded end-to-end case flow, not five half-built systems.
 
-## TNG context from chat
+### 3. Multi-Cloud Service Usage
+- Two clouds must do real work.
+- One cloud can hold the app or seeded data path.
+- The second cloud should own AI, replay, or a clearly justified workload.
+- "We used both because the rules said so" is a losing answer.
 
-- JV: Touch 'n Go + Ant International
-- Chat claim: 23M+ verified users
-- Chat claim: 2M+ merchants
-- Products mentioned:
-  - GO+
-  - GOfinance
-  - payments
-  - insurance
-  - investments
-  - remittance
-- Chat claim: $1B+ valuation
-- Chat claim: Malaysia's first fintech unicorn
-- Chat claim: about 45% owned by CIMB
+### 4. Impact & Feasibility
+- The product needs a real user and a real pain.
+- For this repo, that user is the fraud or AML analyst.
+- The pain is not "fraud exists." The pain is "signals fired, money is about to move, and a human still has to decide fast."
+- Real impact is necessary, but in a hackathon it still needs a memorable moment.
 
-## Judge context from chat
+### 5. Presentation & Teamwork
+- A worse idea can beat a better idea if the pitch is cleaner.
+- The story must be straight:
+  - what happened
+  - what the AI checked
+  - what the human should do
+  - what policy change the replay lab suggests
+- Design quality, documentation quality, and demo calm all matter.
 
-- Judges were not publicly named in the pasted notes
-- Assumption in chat:
-  - TNG Digital leadership
-  - CTO / Head of Risk / CPO types
-  - possibly BNM-adjacent reviewers
-- Core pain point mentioned:
-  - BNM fine tied to sanctioned individuals using the eWallet
-  - strongest projects directly address fraud, AML, sanctions, compliance
+## Current Product Story
 
-## Best fit from chat
+One sentence:
 
-- Best track: Security and Fraud
+> `TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
 
-## Deduped idea list
+What judges should see:
 
-1. Real-time AML and sanctions screener
-   - Analogs: Sardine, Unit21, ComplyAdvantage
-   - Build: sanctions screening + transaction velocity rules + risk scoring + LLM-generated SAR drafts
-   - Chat rank: 1
+1. one case opens already grouped into a single workspace
+2. facts and AI inferences are separated
+3. specialist agents explain what each one checked
+4. the system recommends `hold`, `step-up`, or `escalate`
+5. the analyst can export a note
+6. the team replays a policy threshold change and shows the cost of being stricter
 
-2. Automated suspicious activity report generator
-   - Analogs: Hummingbird, NICE Actimize
-   - Build: ingest flagged transaction clusters and auto-draft BNM-format SAR reports
-   - Chat rank: 2
+## Scam Patterns To Keep In Scope
 
-3. Behavioral fraud scoring engine
-   - Analogs: Feedzai, Stripe Radar, Hawk AI, Sift
-   - Build: real-time scoring using device fingerprint, transaction velocity, merchant category, time-of-day, explainability
-   - Chat rank: 3
+These are the most relevant patterns to anchor the demo around:
 
-4. Drag-and-drop AML rules builder
-   - Analogs: Unit21
-   - Build: rules engine with LLM-assisted rule generation
+1. near-watchlist cross-border payout
+2. dormant-wallet takeover after device change
+3. mule-account or third-party account misuse
+4. malware or phishing-assisted compromise
+5. merchant QR or payout abuse
 
-5. Suspicious transaction monitoring for Malaysian eWallet patterns
-   - Analogs: Hawk AI
-   - Build: transaction monitoring tuned for local wallet behavior
+Good default:
 
-6. Synthetic identity detection for eKYC
-   - Analogs: Resistant AI
-   - Build: detect fake or synthetic identities during onboarding
+- hero case: cross-border near-watchlist payout
+- backup case: dormant-wallet takeover
+- optional second act: merchant abuse if the CTO or mentor says that is hotter
 
-7. Identity risk scoring at onboarding
-   - Analogs: Socure
-   - Build: risk score using alternative identity signals
+## Repo Map
 
-8. On-chain / crypto-adjacent payment risk scoring
-   - Analogs: Elliptic
-   - Build: risk scoring for BNPL or crypto-adjacent flows
+Use each doc for one job. Do not make them all repeat the same pitch.
 
-9. Cross-border remittance anomaly detection
-   - Analogs: ThetaRay
-   - Build: anomaly detection for remittance patterns
+- [README.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/README.md:1)
+  - short project entrypoint
+  - current call
+  - doc map
+- [tng-doc-by-shiwei.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/tng-doc-by-shiwei.md:1)
+  - hackathon handbook
+  - judging criteria
+  - logistics
+  - track notes
+- [AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md:1)
+  - architecture
+  - product strategy
+  - demo sequence
+  - test and risk plan
+- [wbrya-unknown-design-20260425-101346.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/wbrya-unknown-design-20260425-101346.md:1)
+  - current design brief
+  - approach options
+  - CTO questions
+- [TODOS.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/TODOS.md:1)
+  - post-MVP backlog only
+- [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1033)
+  - current prototype
+  - seeded cases
+  - replay scenarios
 
-10. Unified fraud scoring dashboard for risk ops
-    - Analogs: Sift
-    - Build: one dashboard for alerts, scores, triage
+## Immediate Decisions
 
-11. Open-source Radar-style rule engine
-    - Analogs: Stripe Radar
-    - Build: rules-based fraud engine for eWallet transactions
+1. Keep `Security & Fraud` unless the CTO gives a very strong reason to switch.
+2. Ask whether TNG wants the hero case to be cross-border payout, dormant-wallet takeover, merchant abuse, or mule-ring collection.
+3. Lock the cloud split in one sentence and repeat it in the deck.
+4. Decide whether to keep the demo internal-only or add one thin customer step-up moment after `hold` / `ask for more proof`.
 
-12. Liveness and document checks for high-risk actions
-    - Analogs: Onfido
-    - Build: extra verification step for risky account actions
+## CTO Questions
 
-13. KYC re-verification for dormant high-risk accounts
-    - Analogs: Jumio
-    - Build: trigger re-verification before risky reactivation or transactions
+The full list lives in the design doc. The first three to ask are:
 
-14. SAR prioritization
-    - Analogs: NICE Actimize
-    - Build: prioritize investigator queue by risk and expected value
+1. Where is the real pain today: alert triage, evidence gathering, action approval, SAR drafting, or policy tuning?
+2. Which abuse pattern should we make the hero case if we want it to feel closest to TNG reality?
+3. What would make the multi-cloud split feel purposeful instead of cosmetic to you?
 
-## Top 3 from chat
+## Repo Hygiene
 
-### 1. Real-time AML + Sanctions Screener
+- Keep all data synthetic.
+- Do not publish the current `.env` contents as-is.
+- If this goes public, scrub secrets first and treat the repo as judge-facing.
 
-- Why it ranked first in chat:
-  - direct response to sanctions/compliance pain
-  - immediate judge relevance
-  - combines screening, transaction monitoring, and compliance output
+## Inputs Worth Reusing
 
-### 2. Automated SAR Report Generator
-
-- Why it ranked second in chat:
-  - narrow but high-value ops tool
-  - clear demo
-  - saves investigator time
-
-### 3. Behavioral ML Fraud Scoring
-
-- Why it ranked third in chat:
-  - strong DS/ML fit
-  - easy to demo with synthetic data
-  - good explainability story
-
-## Bottom line from chat
-
-- Best direction: Security and Fraud
-- Highest-signal project: real-time AML + sanctions screener
+- [Fraud notes 1](https://www.bryanslab.com/blogs/fraud-2/)
+- [Fraud notes 2](https://www.bryanslab.com/blogs/fraud-ml/)
