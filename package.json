@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "TNG RiskOps Agent demo core, seeded-mode UI-first prototype for ATO detection-to-action orchestration.",
+  "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
