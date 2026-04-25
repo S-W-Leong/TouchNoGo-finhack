@@ -1,7 +1,11 @@
 ---
 title: "feat: Add Entity Risk Network Graph to Case Detail"
 type: feat
+<<<<<<< HEAD
 status: completed
+=======
+status: active
+>>>>>>> 5cafc83 (feat(case): add entity risk network graph to case detail)
 date: 2026-04-26
 origin: docs/brainstorms/2026-04-26-entity-risk-network-graph-requirements.md
 ---

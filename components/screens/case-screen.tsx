@@ -171,11 +171,11 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
               </button>
               <button
                 className="button-secondary"
-                onClick={handleGenerateExplanation}
+                onClick={() => setSheet("network")}
                 type="button"
               >
-                <Files size={14} absoluteStrokeWidth />
-                Generate explanation
+                <Network size={14} absoluteStrokeWidth />
+                Risk network
               </button>
             </div>
           }
