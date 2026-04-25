@@ -9,12 +9,14 @@ import {
   MessageCircleReply,
   Lock,
   MessageSquareShare,
+  Network,
   Scale,
   Send,
   ShieldAlert,
   Timer,
 } from "lucide-react";
 
+import { RiskNetworkGraph } from "@/components/ui/risk-network-graph";
 import { SectionCard } from "@/components/ui/section-card";
 import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Sheet } from "@/components/ui/sheet";
@@ -209,6 +211,101 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
     } finally {
       setPendingAction(null);
     }
+  };
+
+  const mutateCase = async (url: string, payload?: unknown) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: payload ? { "Content-Type": "application/json" } : undefined,
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    return response.json();
+  };
+
+  const handleApplyRecommended = () => {
+    startTransition(async () => {
+      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/action`, {
+        action: record.recommendation.action,
+        actor: "Fraud analyst",
+      });
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
+  };
+
+  const handleOverride = (option: CaseRecord["recommendation"]["humanOverrideOptions"][number]) => {
+    const overrideReason = window.prompt(`Why override to ${formatLabel(option)}?`);
+
+    if (!overrideReason) {
+      return;
+    }
+
+    startTransition(async () => {
+      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/override`, {
+        overrideAction: option,
+        overrideReason,
+        actor: "Fraud analyst",
+      });
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
+  };
+
+  const handleExportReport = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/report`, {
+        format: "MARKDOWN",
+      });
+      setReportContent(result.content);
+      setSheet("note");
+    });
+  };
+
+  const handleGenerateExplanation = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/generate-explanation`);
+      setGeneratedExplanation(result.explanation);
+      setSheet("evidence");
+    });
+  };
+
+  const handleDraftNote = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/draft-note`);
+      setGeneratedNote(result.note);
+      setReportContent(result.note);
+      setSheet("note");
+    });
+  };
+
+  const handleSimulateReply = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("MessageSid", `SIM-IN-${Date.now()}`);
+      formData.set("Body", "/tng-login");
+      formData.set("CaseId", record.caseId);
+      const response = await fetch("/api/webhooks/twilio/inbound", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const refreshed = await fetch(`/api/cases/${record.caseId}`, { cache: "no-store" });
+      const nextRecord = await refreshed.json();
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
   };
 
   return (
@@ -794,6 +891,16 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
         <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] p-3">
           <MarkdownContent content={generatedNote ?? reportContent} />
         </div>
+      </Sheet>
+
+      <Sheet
+        wide
+        open={sheet === "network"}
+        onClose={() => setSheet(null)}
+        title="Entity risk network"
+        subtitle="Linked accounts, devices, and beneficiaries connected to this case."
+      >
+        <RiskNetworkGraph record={record} />
       </Sheet>
     </div>
   );

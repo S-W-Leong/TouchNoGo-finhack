@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { clsx } from "clsx";
 
 export function Sheet({
   open,
@@ -9,6 +10,7 @@ export function Sheet({
   onClose,
   variant = "side",
   children,
+  wide,
 }: {
   open: boolean;
   title: string;
@@ -16,6 +18,7 @@ export function Sheet({
   onClose: () => void;
   variant?: "side" | "modal";
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   if (!open) {
     return null;
