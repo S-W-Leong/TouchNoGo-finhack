@@ -36,8 +36,8 @@ With this meaning:
 - `USER DATA`: login events, device changes, account changes, transaction attempts, success vs failure
 - `DETECTION`: scripted detection logic, user scoring, result classification
 - `ACTION`: automatic freeze, review routing, `STUDY` tag, case creation
-- `PROMPT`: notify the user to reverify through app login, MFA, and face verification
-- `RESOLVED`: reactivate, keep blocked, or report into manager summaries
+- `PROMPT`: send WhatsApp instruction telling the user to go to Touch 'n Go and complete relogin / MFA / face recognition
+- `RESOLVED`: user replies `/tng-login`, system receives webhook, and auto-resolves as reactivated or blocked
 
 This means the app is not just a fraud analyst dashboard.
 It is a fraud action orchestration product.
@@ -57,7 +57,7 @@ The v1 focus is:
 - deterministic score and policy logic
 - AI for explanation, recommendation, and report generation
 - automated action for the high-confidence path
-- user re-verification prompt flow
+- WhatsApp prompt flow
 - resolved outcome tracking
 - replay for one threshold, action-band, or draft-rule change
 
@@ -128,7 +128,7 @@ Shows:
 - current threshold or action band
 - readable draft rule
 - automated action mapping
-- prompt template and re-verification steps
+- WhatsApp prompt template
 - before / after replay results
 - more bad cases caught
 - more good users delayed
@@ -509,9 +509,9 @@ What not to do:
 5. Rule engine maps the score and evidence into an automatic action.
 6. System auto-applies `REVIEW`, `FREEZE_ACCOUNT`, or `STUDY` based on the action ladder.
 7. Policy layer shows exactly why that action was allowed.
-8. System sends the user a re-verification prompt by WhatsApp and in-app notification.
-9. User re-verifies through relogin, MFA, and face verification.
-10. System resolves the case as `REACTIVATED`, `BLOCKED`, or `ESCALATED`.
+8. System sends the user a WhatsApp message telling them to go to Touch 'n Go for relogin / MFA / face recognition.
+9. User replies `/tng-login` in WhatsApp.
+10. WhatsApp webhook updates the app and auto-resolves the case as `REACTIVATED`, `BLOCKED`, or `ESCALATED`.
 11. Manager report and case outcome are generated.
 12. Analyst opens Controls Lab and tightens one threshold, action band, or draft rule.
 13. Replay shows the tradeoff.
@@ -696,8 +696,9 @@ IF
 THEN
   action = FREEZE_ACCOUNT
   prompt = WHATSAPP_REVERIFY
-  resolved_if_pass = REACTIVATE
-  resolved_if_fail = KEEP_BLOCKED
+  whatsapp_message = "Please go to Touch 'n Go to complete relogin / MFA / face recognition. Reply /tng-login once done."
+  resolved_if_reply = REACTIVATE
+  resolved_if_timeout = KEEP_BLOCKED
 ```
 
 ### 5. Behavior Score Engine
@@ -886,7 +887,9 @@ Score 92
   -> EV-101, EV-102, EV-104
   -> POL-ATO-03 allows FREEZE_ACCOUNT
   -> system auto-applies FREEZE_ACCOUNT
-  -> system sends WHATSAPP_REVERIFY
+  -> system sends WhatsApp: "Please go to Touch 'n Go ..."
+  -> user replies /tng-login
+  -> case auto-resolves as REACTIVATED
   -> transfer blocked before completion
 ```
 
@@ -899,9 +902,7 @@ Prompt states:
 - `PENDING_SEND`
 - `SENT`
 - `DELIVERED`
-- `REVERIFY_STARTED`
-- `REVERIFY_PASSED`
-- `REVERIFY_FAILED`
+- `USER_REPLIED_TNG_LOGIN`
 - `EXPIRED`
 
 Resolved states:
@@ -914,10 +915,10 @@ Resolved states:
 v1 prompt flow:
 
 - send WhatsApp notification
-- ask user to relogin
-- require MFA
-- require face verification
-- resolve automatically if checks pass
+- message instructs user to go to Touch 'n Go for relogin / MFA / face recognition
+- user replies `/tng-login`
+- WhatsApp webhook updates the case
+- system auto-resolves based on reply or timeout
 
 ### 8. Report Draft And Export
 
@@ -1357,7 +1358,7 @@ Build in this order and stop when the previous slice is weak.
 4. Deterministic score and action ladder
 5. Automated freeze or review execution
 6. WhatsApp re-verification prompt flow
-7. Resolved outcome tracking and audit log
+7. WhatsApp reply webhook and resolved outcome tracking
 8. Note export or manager report
 9. Controls Lab replay
 10. Backup unauthorized-transaction case
@@ -1388,7 +1389,7 @@ Build in this order and stop when the previous slice is weak.
 4. Show the deterministic behavior score and feature drivers.
 5. Show automatic `FREEZE_ACCOUNT` or `REVIEW` triggered by rule and policy.
 6. Show WhatsApp re-verification prompt sent to the user.
-7. Show resolved state as `REACTIVATED` or `BLOCKED`.
+7. Show user reply `/tng-login` and auto-resolved state as `REACTIVATED` or `BLOCKED`.
 8. Export the case note or manager report.
 9. Open Controls Lab.
 10. Tighten one threshold, action band, or readable draft rule.
