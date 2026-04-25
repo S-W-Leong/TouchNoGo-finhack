@@ -2,7 +2,7 @@
 
 ## Core Decision
 
-Build the `AI-native pre-payout decision workspace for fraud + AML ops`.
+Build the `AI-assisted analyst workspace for account takeover detection, investigation, and intervention`.
 
 Do not build the whole fraud ops platform.
 Do not build a full no-code rules engine first.
@@ -10,36 +10,59 @@ Do not build a generic alert dashboard with AI sprinkled on top.
 
 The wedge is:
 
-`alert -> investigate -> recommend -> human decides -> export note -> replay policy`
+`detect -> investigate -> recommend -> human decides -> action -> export note -> replay control`
+
+The hero case is now:
+
+- `account takeover`
+
+The secondary consequence path is:
+
+- `unauthorized transaction after takeover`
 
 The spike is the trigger, not the product.
+User behavior is the core signal layer.
+
+## Why This Changed
+
+The strongest new signal came from [docs/feedback-zenny.md](./docs/feedback-zenny.md).
+
+That feedback came from a former fraud analyst who now works in TNG security.
+
+The most important directional change is:
+
+- old direction leaned toward `near-watchlist payout`
+- direct field feedback leans much more strongly toward `ATO`, `user behavior`, and `analyst actioning`
+
+That is strong enough to update the product focus.
 
 ## Is This Useful And Impressive Enough?
 
-Yes, if we keep the scope sharp.
+Yes, if the scope stays tight.
 
 ### Why it is useful
 
 This solves a real fraud ops problem:
 
-- which case matters now
-- what evidence supports action
-- what policy it maps to
-- what the analyst should do before money leaves
-- what gets logged for audit
+- which suspicious account matters now
+- what user behavior actually happened
+- whether the suspicious actions succeeded
+- what controls already fired
+- what action the analyst should take next
+- what gets logged for audit and support follow-up
 
-This is closer to the actual analyst pain than another score or another queue.
+This is closer to real analyst work than another static score or another dashboard.
 
 ### Why it is impressive
 
 It gives a complete demo arc in under 4 minutes:
 
-1. a risky payout appears
-2. the case is investigated with grounded evidence
-3. AI recommends an action and shows why
-4. the human overrides or approves
-5. the system exports a regulator-ready note
-6. the team replays a policy change and shows the tradeoff
+1. a spike in suspicious account behavior appears
+2. one risky ATO case is opened
+3. AI explains the behavior pattern and recommended action
+4. the human approves or overrides the action
+5. the system exports a case note or ticket handoff
+6. the team replays a threshold or action-band change and shows the tradeoff
 
 That is much stronger than "we built fraud detection."
 
@@ -48,16 +71,42 @@ That is much stronger than "we built fraud detection."
 It becomes weak if we do any of these:
 
 - build a queue with no real decision path
-- make AI a black box with no evidence references
+- make the fraud score a black box
 - build a fake rule builder with no replay value
-- spread scope across too many scenarios
-- make the human override invisible
+- show too many fraud types at once
+- hide the human override
+- turn the case page into an unreadable mission-control wall
+
+## TNG Value
+
+### Why TNG would care
+
+- safer wallet platform for consumers and merchants
+- fewer successful fraud cases
+- fewer manual tickets and support escalations
+- less need to scale analyst headcount linearly
+- stronger trust and compliance posture
+
+### How to talk about business value
+
+Do not pitch this as:
+
+- "AI replaces fraud teams"
+- "100% guarantee no fraud"
+
+Pitch it as:
+
+- better analyst leverage
+- faster intervention
+- fewer successful fraud cases
+- safer platform
+- less manual review load
 
 ## Product Call
 
 ### One-line pitch
 
-`TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
+`TNG RiskOps Agent turns suspicious user behavior into evidence-backed account takeover decisions, analyst actions, and replayable control tradeoffs before unauthorized money movement succeeds.`
 
 ### Primary user
 
@@ -65,32 +114,32 @@ It becomes weak if we do any of these:
 
 ### Secondary users
 
-- AML investigator
+- IT security lead
 - compliance lead
-- risk product manager
+- support operations lead
 
 ### Core job to be done
 
-Help an analyst decide faster, with better evidence, before money leaves.
+Help an analyst understand suspicious user behavior, decide whether the account is taken over, and choose the next control before more damage happens.
 
 ## What To Build
 
 Three pages only.
 
-### 1. Queue / Command Center
+### 1. Queue / ATO Command Center
 
 Purpose:
 
-- show the highest-priority cases fast
-- make the spike visible
+- show the highest-priority suspicious accounts fast
+- make the ATO spike visible
 - route the analyst into one hero case
 
 Must show:
 
 - ranked cases
-- risk level
+- user behavior risk score
 - reason chips
-- agent status
+- current control state
 - one spike banner or anomaly card
 
 Key interactions:
@@ -109,81 +158,109 @@ What not to do:
 
 Purpose:
 
-- put all evidence, policy, AI reasoning, and action in one place
+- put user behavior, evidence, policy, AI reasoning, and action in one place
 
 This is the core page.
 
 Layout:
 
-- left rail: ranked cases, reason chips, agent status
-- center: evidence timeline, entity graph, facts, AI inferences, missing-data requests
-- right rail: recommended action, policy citations, confidence, human controls, export note
+- top summary strip: masked user snapshot, behavior risk score, current controls
+- left rail: ranked cases, reason chips, analyst status
+- center: user timeline, account changes, device changes, linked accounts, attempted vs succeeded actions, facts, AI inferences, missing-data requests
+- right rail: recommended action, policy or compliance lines, confidence, human controls, export note or ticket handoff
 
-Must answer four questions instantly:
+Must answer five questions instantly:
 
-1. What evidence did the system use?
-2. What action does it recommend?
-3. What policy did it map to?
-4. What can the human override?
+1. What behavior happened?
+2. Did suspicious actions succeed?
+3. What evidence did the system use?
+4. What action does it recommend and why?
+5. What can the human override?
 
 Key interactions:
 
-- inspect linked entities
+- inspect linked accounts and devices
 - expand evidence items
 - distinguish `FACT` vs `INFERENCE` vs `POLICY`
-- approve `HOLD`, `STEP_UP`, or `ESCALATE`
+- see current control state, not limited to: no action, review, freeze pending
+- approve `ALLOW`, `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, or `ESCALATE`
 - override recommendation with mandatory human reason
-- export case note
+- export case note or ticket handoff
 
 ### 3. Scenario Lab / Replay
 
 Purpose:
 
-- prove that policy changes can be tested safely before rollout
+- prove that behavior thresholds or action bands can be tested safely before rollout
 
 Must show:
 
-- current policy value
-- proposed policy value
+- current action band or threshold
+- proposed action band or threshold
 - fixed seeded scenarios
-- bad payouts caught
+- bad cases caught
 - good users delayed
+- analyst workload delta
 - deterministic rerun result
 
 Key interactions:
 
-- change one threshold or condition
+- change one threshold or one action band
 - rerun the replay
 - compare before vs after
-- optionally generate one draft rule from reviewed anomalies, then replay it before saving
+
+Optional only if the core demo is already stable:
+
+- one AI-generated draft rule from reviewed anomalies, replayed before saving as draft
 
 What not to do:
 
 - no full visual drag-and-drop rule builder
 - no fake no-code DSL unless it directly drives replay
+- no autonomous rule deployment
 
 ## Core Product Flow
 
 ### Hero flow
 
-1. Queue shows a spike in risky cross-border payouts.
-2. Analyst opens the highest-risk case.
-3. Workspace shows linked wallet, device, beneficiary, and watchlist evidence.
-4. Specialist agents produce findings and a recommendation.
-5. Policy engine maps findings to specific policy lines.
-6. Analyst chooses `HOLD`, `STEP_UP`, or `ESCALATE`.
-7. System drafts and exports the case note.
-8. Analyst opens Scenario Lab and tightens one policy threshold.
-9. Replay shows the tradeoff.
+1. Queue shows a spike in suspicious ATO-like behavior.
+2. Analyst opens the highest-risk account.
+3. Workspace shows login time, device change, account changes, linked accounts, and suspicious transaction attempts.
+4. Deterministic behavior score and feature drivers are shown.
+5. AI summarizes the behavior pattern and recommends the next action.
+6. Policy and audit layer maps that action to explicit control and review requirements.
+7. Analyst chooses `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, or `ESCALATE`.
+8. System drafts and exports the case note or ticket handoff.
+9. Analyst opens Scenario Lab and tightens one threshold or action band.
+10. Replay shows the tradeoff.
 
 ### Backup flow
 
 Use one second case for Q&A:
 
-- dormant wallet takeover
-- mule-ring collection
+- unauthorized transaction after account takeover
 
 Do not build more than one backup case.
+
+## V1 vs V1.5
+
+### V1 must ship
+
+- queue with one spike banner
+- one hero ATO case
+- behavior timeline
+- deterministic behavior score with visible drivers
+- AI recommendation with evidence references
+- human action and override reason
+- masked PII
+- case note or ticket export
+- simple threshold replay
+
+### V1.5 only if v1 is stable
+
+- one AI-generated draft rule from reviewed anomalies
+- one backup case
+- one thin integration card for Zendesk or internal case tooling
 
 ## Modules
 
@@ -193,7 +270,7 @@ Build these modules and no more.
 
 Responsibility:
 
-- create synthetic but realistic Malaysia-context cases
+- create synthetic but realistic Malaysia-context ATO and unauthorized-transaction cases
 - ensure every case already tells a story
 
 Output:
@@ -201,11 +278,12 @@ Output:
 - users
 - wallets
 - devices
-- beneficiaries
-- merchants
+- linked accounts
+- beneficiaries or payment instruments
 - transactions
+- behavior events
 - alerts
-- policies
+- controls state
 - expected recommendation
 - replay scenarios
 
@@ -217,12 +295,13 @@ Deterministic:
 
 Responsibility:
 
-- turn seeded alert events into one case record
-- collapse duplicate alerts into a single investigation surface
+- turn seeded behavior events and alerts into one case record
+- collapse duplicate signals into a single investigation surface
 
 Input:
 
 - seeded alert events
+- seeded behavior events
 
 Output:
 
@@ -234,66 +313,77 @@ Deterministic:
 
 - yes
 
-### 3. Entity Graph Resolver
+### 3. Behavior Timeline And Link Resolver
 
 Responsibility:
 
-- connect user, wallet, device, beneficiary, merchant, email, phone, and watchlist entry
+- connect user, wallet, device, linked accounts, beneficiary, and past suspicious activity
+- order the suspicious sequence in time
 - score the confidence of each link
 
 Important rule:
 
-- do not silently merge ambiguous entities
+- do not silently merge ambiguous links
 - show uncertainty in the UI
 
 Deterministic:
 
 - yes
 
-### 4. Policy Engine
+### 4. Policy And Action Ladder Engine
 
 Responsibility:
 
-- evaluate which policies are triggered
-- map evidence to policy citations
+- evaluate which control policies are triggered
+- map evidence to policy or control citations
 - constrain which actions are allowed
 
 Important rule:
 
-- no high-risk action without policy mapping
+- no severe action without policy mapping
 - no auto-approve when policy is missing
+- human approval remains visible for severe controls
 
 Deterministic:
 
 - yes
 
-### 5. AI Investigation Copilot
+### 5. Behavior Score Engine
 
 Responsibility:
 
-- gather facts into a readable investigation
-- explain why the case matters
-- request missing information
-- recommend a next step
-
-Suggested specialist agents:
-
-- `BEHAVIOR`
-- `SANCTIONS`
-- `POLICY`
-- `REPORTER`
-- `ORCHESTRATOR`
+- calculate a deterministic per-user or per-case behavior risk score
+- expose the feature contributions used to reach the score
 
 Important rule:
 
-- AI does not make the final irreversible decision
+- the score itself should be deterministic or rules-based
+- AI should explain the score, not secretly generate it
+
+Deterministic:
+
+- yes
+
+### 6. AI Investigation Copilot
+
+Responsibility:
+
+- explain suspicious behavior in plain English
+- summarize what happened from the user point of view
+- highlight missing information
+- recommend a next step
+
+Important rule:
+
+- AI does not own the final severe action
 - AI output must cite evidence IDs and policy IDs
+- AI must not behave like a black-box scoring engine
 
 Deterministic:
 
 - no
 
-### 6. Recommendation And Action Rail
+### 7. Recommendation And Action Rail
 
 Responsibility:
 
@@ -301,38 +391,40 @@ Responsibility:
 - show current recommendation
 - require human confirmation or override reason
 
-Allowed actions:
+Allowed actions for v1:
 
 - `ALLOW`
-- `STEP_UP`
-- `HOLD`
+- `STEP_UP_VERIFICATION`
+- `FREEZE_ACCOUNT`
 - `ESCALATE`
 
 Hackathon note:
 
-- do not expose `FREEZE` unless the policy + demo quality are strong enough
+- keep device block and IP block as visible control state or future action, not primary v1 buttons
 
-### 7. Report Draft And Export
+### 8. Report Draft And Export
 
 Responsibility:
 
 - turn evidence ledger + final action into an export-ready note
+- support a believable handoff to support or case tooling
 
 Must include:
 
 - case summary
+- behavior sequence
 - facts used
 - AI inferences
-- policy citations
+- policy or control citations
 - final human action
 - human approver or overrider
 - audit timestamp
 
-### 8. Replay Engine
+### 9. Replay Engine
 
 Responsibility:
 
-- rerun fixed scenarios against a changed policy
+- rerun fixed scenarios against a changed threshold or action band
 - compare outcomes
 
 Important rule:
@@ -343,11 +435,12 @@ Deterministic:
 
 - yes
 
-### 9. Audit Trail
+### 10. Audit Trail And Compliance Surface
 
 Responsibility:
 
 - log every important system and human action
+- keep masking and security posture visible
 
 Must capture:
 
@@ -360,6 +453,12 @@ Must capture:
 - note exported
 - replay run
 
+Must show:
+
+- masked PII by default
+- audit trail
+- encryption-at-rest callout in architecture or deck
+
 Deterministic:
 
 - yes
@@ -368,21 +467,20 @@ Deterministic:
 
 ### AI should do
 
-- evidence assembly
+- behavior explanation
 - case explanation
 - missing-data prompts
 - next-action recommendation
 - policy reasoning in plain English
 - note drafting
-- draft one candidate rule from reviewed anomalies, but only as a human-reviewed replayable draft
 
 ### AI should not do
 
-- black-box risk scoring as the whole product
-- raw rule execution
-- final irreversible enforcement
+- secretly generate the core fraud score
+- replace deterministic policy logic
+- take final irreversible action alone
 - fake certainty
-- unsupported claims without evidence IDs
+- make unsupported claims without evidence IDs
 
 ## Data Creation Plan
 
@@ -394,15 +492,15 @@ Make the data local and believable, not generic.
 
 Build three families:
 
-1. `WATCHLIST_PAYOUT`
-2. `DORMANT_TAKEOVER`
-3. `MULE_RING`
+1. `ACCOUNT_TAKEOVER`
+2. `UNAUTHORIZED_TRANSACTION`
+3. `MULE_ACCOUNT_ABUSE`
 
 Use one hero family and one backup family in the live demo.
 
 ### Suggested case count
 
-- 8 to 12 total cases
+- 6 to 10 total cases
 - 1 hero case
 - 1 backup case
 - remaining cases only for queue realism
@@ -410,17 +508,18 @@ Use one hero family and one backup family in the live demo.
 ### For each case, seed these records
 
 - `case`
-- `user`
+- `masked_user_profile`
 - `wallet`
 - `device`
-- `beneficiary`
-- `merchant` if relevant
-- `watchlist_entry` if relevant
+- `linked_accounts`
+- `beneficiary` or `payment_instrument` if relevant
 - `transactions`
+- `behavior_events`
+- `controls_state`
 - `alerts`
 - `entity_edges`
-- `policies_triggered`
 - `evidence_items`
+- `behavior_score`
 - `ai_recommendation`
 - `allowed_actions`
 - `expected_final_action`
@@ -430,30 +529,33 @@ Use one hero family and one backup family in the live demo.
 
 Use:
 
-- `near-watchlist cross-border payout`
+- `suspicious account takeover with attempted unauthorized transfer`
 
 Why:
 
-- easy to understand in 20 seconds
-- visually strong for evidence + policy + replay
-- naturally supports `HOLD`
-- easy to show tradeoff when tightening threshold
+- directly matches the field feedback
+- easy to understand in under 20 seconds
+- ties user behavior to action
+- naturally supports freeze or step-up
+- easy to replay a threshold change
 
 ### Hero case facts to seed
 
-- first cross-border payout to this beneficiary
-- beneficiary alias similarity to watchlist above warning threshold but below hard block
-- dormant wallet reactivated recently
-- new device used
-- payout amount much higher than recent baseline
-- device or beneficiary linked to another reviewed case
+- account was normal for months, then a suspicious login happens around 2am
+- login comes from a new device
+- recent account change happens, not limited to: PIN reset, profile update, beneficiary addition
+- a high-value transfer or top-up is attempted soon after the account change
+- transaction amount is far above recent user baseline
+- one linked account or device has appeared in another reviewed case
+- current controls show that the account is not yet frozen
+- at least one suspicious action is attempted and the case shows whether it succeeded
 
 ### Example recommendation
 
-- recommended action: `HOLD`
-- confidence: `0.81`
-- policy mapping: `POL-FRD-12`, `POL-AML-07`
-- human override options: `STEP_UP`, `ESCALATE`, `ALLOW`
+- recommended action: `FREEZE_ACCOUNT`
+- confidence: `0.84`
+- policy mapping: `POL-ATO-03`, `POL-OPS-04`
+- human override options: `STEP_UP_VERIFICATION`, `ESCALATE`, `ALLOW`
 
 ### How to create the seed data
 
@@ -462,9 +564,9 @@ Do not wait for a perfect fraud dataset.
 Use this method:
 
 1. Write 3 scenario templates in JSON or TS.
-2. For each template, define the story, risk signals, linked entities, triggered policies, and expected action.
-3. Generate 8 to 12 cases from those templates with slightly different values.
-4. Precompute evidence items and replay results for demo stability.
+2. For each template, define the story, behavior sequence, linked entities, triggered policies, and expected action.
+3. Generate 6 to 10 cases from those templates with slightly different values.
+4. Precompute behavior score components, evidence items, and replay results for demo stability.
 5. Keep the data fixed for the demo build.
 
 ### Suggested seed file structure
@@ -472,12 +574,12 @@ Use this method:
 ```text
 seed/
   scenarios/
-    watchlist-payout.json
-    dormant-takeover.json
-    mule-ring.json
+    account-takeover.json
+    unauthorized-transaction.json
+    mule-account-abuse.json
   cases/
-    hero-watchlist-payout.json
-    backup-dormant-takeover.json
+    hero-account-takeover.json
+    backup-unauthorized-transaction.json
   policies/
     policy-config.json
   replay/
@@ -488,18 +590,19 @@ seed/
 
 ```json
 {
-  "scenario_id": "watchlist-payout-001",
-  "scenario_type": "WATCHLIST_PAYOUT",
-  "title": "Near-watchlist cross-border payout",
-  "recommended_action": "HOLD",
-  "allowed_actions": ["STEP_UP", "HOLD", "ESCALATE"],
-  "risk_signals": [
+  "scenario_id": "account-takeover-001",
+  "scenario_type": "ACCOUNT_TAKEOVER",
+  "title": "Suspicious account takeover with attempted transfer",
+  "recommended_action": "FREEZE_ACCOUNT",
+  "allowed_actions": ["STEP_UP_VERIFICATION", "FREEZE_ACCOUNT", "ESCALATE"],
+  "behavior_signals": [
+    "late_night_login",
     "new_device",
-    "dormant_wallet_reactivated",
-    "beneficiary_name_similarity",
-    "high_amount_vs_baseline"
+    "recent_account_change",
+    "high_amount_vs_baseline",
+    "linked_account_risk"
   ],
-  "policy_ids": ["POL-FRD-12", "POL-AML-07"],
+  "policy_ids": ["POL-ATO-03", "POL-OPS-04"],
   "evidence_ids": ["EV-101", "EV-102", "EV-103", "EV-104"]
 }
 ```
@@ -513,31 +616,33 @@ Suggested tables:
 - `cases`
 - `entities`
 - `entity_edges`
+- `behavior_events`
 - `transactions`
+- `controls_state`
 - `alerts`
 - `evidence_items`
+- `score_components`
 - `agent_runs`
 - `recommendations`
 - `policies`
-- `policy_matches`
 - `audit_events`
 - `replay_runs`
 
 ### Important enums
 
-- `EntityType`: `USER`, `WALLET`, `DEVICE`, `MERCHANT`, `BENEFICIARY`, `WATCHLIST_ENTRY`
-- `EvidenceKind`: `FACT`, `INFERENCE`, `POLICY`, `EXTERNAL_MATCH`
+- `EntityType`: `USER`, `WALLET`, `DEVICE`, `BENEFICIARY`, `PAYMENT_INSTRUMENT`, `LINKED_ACCOUNT`
+- `EvidenceKind`: `FACT`, `INFERENCE`, `POLICY`, `CONTROL_STATE`
 - `CaseStatus`: `NEW_ALERT`, `INVESTIGATING`, `READY_FOR_REVIEW`, `NEEDS_MORE_DATA`, `CLOSED`
-- `RecommendationAction`: `ALLOW`, `STEP_UP`, `HOLD`, `ESCALATE`
+- `RecommendationAction`: `ALLOW`, `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, `ESCALATE`
 
 ## Page-Level Flow Contract
 
-### Queue / Command Center
+### Queue / ATO Command Center
 
 On load:
 
 - show seeded cases
-- highest-risk case is first
+- highest-risk ATO case is first
 - spike banner is visible
 
 On click:
@@ -549,10 +654,12 @@ On click:
 
 On load:
 
-- show case summary
-- show evidence timeline
-- show entity graph
-- show facts vs inferences
+- show masked user summary
+- show behavior score and feature drivers
+- show user timeline
+- show account changes
+- show linked accounts or devices
+- show attempted vs succeeded suspicious actions
 - show recommendation + policy citations
 
 On analyst action:
@@ -560,25 +667,43 @@ On analyst action:
 - require confirmation
 - require override reason if analyst disagrees with AI
 - write audit event
-- update case status
+- update control state
 
 On export:
 
 - create note artifact from evidence ledger
 - keep downloadable or copyable output
+- show believable handoff to support or case tooling
 
 ### Scenario Lab
 
 On load:
 
-- show current policy value
+- show current threshold or action band
 - show seeded replay baseline
 
-On policy change:
+On threshold change:
 
 - rerun replay against same seed
 - show delta summary
+- show analyst workload delta
 - write replay run to audit
+
+## Compliance And Integration Posture
+
+For v1, the product should visibly support:
+
+- masked PII by default
+- audit trail
+- human approval for severe actions
+- encryption-at-rest callout in the architecture slide
+- simple export or handoff to ticketing, not necessarily live Zendesk integration
+
+Do not overbuild:
+
+- no live customer call workflow
+- no real device or IP blocking integration
+- no full regulatory reporting engine
 
 ## Spike Feature Decision
 
@@ -588,7 +713,7 @@ The spike should be:
 
 - a banner on the queue
 - one concise anomaly explanation
-- one click into the relevant case cluster
+- one click into the relevant ATO case cluster
 
 The spike should not be:
 
@@ -602,12 +727,13 @@ Do not build these in the hackathon:
 
 - full no-code rule and workflow builder
 - proprietary fraud model training pipeline
-- full sanctions provider integration
+- live Zendesk integration
+- live device or IP block enforcement
 - production event streaming
-- customer-facing remediation journey
+- full customer recovery journey
 - separate graph database
-- full analyst team routing workflow
-- every FRAML surface at once
+- every fraud type at once
+- every compliance workflow at once
 
 ## Judging-Criteria Fit
 
@@ -615,19 +741,19 @@ Do not build these in the hackathon:
 
 This build uses AI in the right place:
 
-- repetitive investigation work
+- behavior explanation
 - evidence synthesis
 - action recommendation
 - policy explanation
 - note drafting
 
-This avoids the common mistake of using LLMs as fake deterministic scoring engines.
+This avoids the mistake of using LLMs as fake deterministic scoring engines.
 
 ### 2. Technical implementation
 
 This can be built as a stable prototype because:
 
-- core rules stay deterministic
+- score and policy logic stay deterministic
 - replay stays deterministic
 - seeded data keeps the demo reliable
 - one app can serve the whole flow
@@ -641,16 +767,16 @@ Use a real split:
 
 Judge sentence:
 
-`AWS runs the investigation system of record; Alibaba runs the AI analyst that explains evidence and drafts actions.`
+`AWS runs the investigation system of record; Alibaba runs the AI analyst that explains suspicious behavior and drafts actions.`
 
 ### 4. Impact and reliability
 
 The impact story is clear:
 
-- risky money movement is challenged before payout
-- analysts work faster
-- evidence and policy are auditable
-- policy changes can be tested before rollout
+- suspicious accounts are investigated faster
+- risky actions can be interrupted sooner
+- analysts can handle more cases with better evidence
+- trust and compliance posture become more visible
 
 ### 5. Presentation
 
@@ -668,57 +794,60 @@ That is one straight line.
 
 Build in this order and stop when the previous slice is weak.
 
-1. Seeded data and hero case
+1. Seeded ATO hero case
 2. Queue with reason chips and spike banner
-3. Case workspace with facts vs inferences
-4. Policy mapping and action rail
-5. Human override and audit log
-6. Note export
+3. Case workspace with behavior timeline and feature drivers
+4. Deterministic score and action ladder
+5. Human override, masked PII, and audit log
+6. Note export or ticket handoff
 7. Scenario Lab replay
-8. Backup case
+8. Backup unauthorized-transaction case
+9. AI draft-rule suggestion only if everything above is stable
 
 ## Minimum Viable Demo Checklist
 
 - first page loads with seeded cases
 - hero case is understandable in under 20 seconds
+- behavior score shows visible drivers
 - every recommendation cites evidence IDs
 - every recommendation cites policy IDs
 - human can approve or override
 - override requires a reason
+- masked PII is visible
 - note export works
 - replay is deterministic by seed
-- one policy edit changes replay outcome visibly
+- one threshold edit changes replay outcome visibly
 
 ## 4-Minute Demo Script
 
-1. Open Queue and point at the spike banner.
-2. Open the top risky payout case.
-3. Show entity graph and evidence timeline.
-4. Show facts vs AI inferences.
-5. Show recommended `HOLD` with policy citations.
-6. Override or approve as analyst.
-7. Export the case note.
+1. Open Queue and point at the ATO spike banner.
+2. Open the top risky account case.
+3. Show the user behavior timeline, account changes, and suspicious action attempts.
+4. Show the deterministic behavior score and feature drivers.
+5. Show AI explanation and recommended `FREEZE_ACCOUNT` or `STEP_UP_VERIFICATION`.
+6. Approve or override as analyst.
+7. Export the case note or ticket handoff.
 8. Open Scenario Lab.
-9. Tighten one threshold.
+9. Tighten one threshold or action band.
 10. Replay and show the tradeoff.
 
 ## If Time Remains
 
 Only after the core demo is stable:
 
-- add one thin policy editor panel
 - add one backup case family
-- add one tiny customer step-up mock after `HOLD`
+- add one thin integration card for ticketing
+- add one AI-generated draft rule suggestion in Scenario Lab
 
 ## Final Call
 
 The strongest hackathon version is not:
 
-- `alert dashboard + no-code workflow builder + AI assistant`
+- `alert dashboard + generic fraud score + AI assistant`
 
 The strongest hackathon version is:
 
-- `AI-native pre-payout decision workspace with evidence graph, action rail, note export, and replay lab`
+- `AI-assisted analyst workspace for account takeover detection, investigation, and intervention`
 
-That is useful enough because it targets a real analyst bottleneck.
-That is impressive enough because it shows grounded AI, human control, and policy replay in one flow.
+That is useful enough because it targets a real TNG workflow bottleneck.
+That is impressive enough because it shows behavior-led reasoning, human action, and replayable controls in one flow.
