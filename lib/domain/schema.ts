@@ -39,6 +39,19 @@ export const variableTypeSchema = z.enum([
   "DURATION_HOURS",
 ]);
 
+export const ruleOperatorSchema = z.enum([
+  "=",
+  "!=",
+  "<",
+  ">",
+  "<=",
+  ">=",
+  "IN",
+  "INCLUDES",
+]);
+
+export const ruleStatusSchema = z.enum(["ACTIVE", "DRAFT", "SHADOW"]);
+
 export const queueBannerSchema = z.object({
   clusterId: z.string(),
   title: z.string(),
@@ -198,6 +211,28 @@ export const replayScenarioSchema = z.object({
   impact: z.string(),
 });
 
+export const ruleConditionSchema = z.object({
+  clauseId: z.string(),
+  variableName: z.string(),
+  operator: ruleOperatorSchema,
+  value: z.string(),
+  hint: z.string(),
+});
+
+export const ruleDefinitionSchema = z.object({
+  ruleId: z.string(),
+  name: z.string(),
+  status: ruleStatusSchema,
+  appliesTo: z.string(),
+  action: recommendationActionSchema,
+  version: z.string(),
+  owner: z.string(),
+  lastEditedAt: z.string(),
+  freezeThreshold: z.number(),
+  rationale: z.string(),
+  conditions: z.array(ruleConditionSchema),
+});
+
 export const controlsWorkspaceSchema = z.object({
   actionBands: z.array(
     z.object({
@@ -223,6 +258,7 @@ export const controlsWorkspaceSchema = z.object({
     }),
   }),
   replayScenarios: z.array(replayScenarioSchema),
+  rules: z.array(ruleDefinitionSchema),
 });
 
 export const demoDataSchema = z.object({
@@ -242,3 +278,5 @@ export type QueueBanner = z.infer<typeof queueBannerSchema>;
 export type QueueMetrics = z.infer<typeof queueMetricsSchema>;
 export type CaseRecord = z.infer<typeof caseRecordSchema>;
 export type ControlsWorkspace = z.infer<typeof controlsWorkspaceSchema>;
+export type RuleDefinition = z.infer<typeof ruleDefinitionSchema>;
+export type RuleCondition = z.infer<typeof ruleConditionSchema>;

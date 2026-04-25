@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Manrope } from "next/font/google";
+import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
 
 import "./globals.css";
 
-const manrope = Manrope({
+const instrumentSans = Instrument_Sans({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-instrument-sans",
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -23,9 +23,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${manrope.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${instrumentSans.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );
 }
-

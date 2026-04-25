@@ -287,6 +287,99 @@
       { "scenarioId": "RS-1", "label": "Primary ATO case", "beforeAction": "STEP_UP_VERIFICATION", "afterAction": "FREEZE_ACCOUNT", "impact": "One extra bad case stopped before transfer completion." },
       { "scenarioId": "RS-2", "label": "Dormant wallet recovery", "beforeAction": "ALLOW", "afterAction": "STEP_UP_VERIFICATION", "impact": "One extra good user delay introduced." },
       { "scenarioId": "RS-3", "label": "Unauthorized transaction backup case", "beforeAction": "REVIEW", "afterAction": "ESCALATE", "impact": "Analyst workload rises but evidence pack is more complete." }
+    ],
+    "rules": [
+      {
+        "ruleId": "RULE-ATO-FREEZE-001",
+        "name": "Freeze on severe ATO sequence",
+        "status": "ACTIVE",
+        "appliesTo": "Transfer-enabled wallets",
+        "action": "FREEZE_ACCOUNT",
+        "version": "v12",
+        "owner": "Risk controls",
+        "lastEditedAt": "2026-04-25T20:05:00+08:00",
+        "freezeThreshold": 85,
+        "rationale": "Use severe action only when device, credential reset, and movement risk appear in the same session.",
+        "conditions": [
+          {
+            "clauseId": "C-1",
+            "variableName": "is_new_device",
+            "operator": "=",
+            "value": "true",
+            "hint": "First-seen device within the last 24 hours."
+          },
+          {
+            "clauseId": "C-2",
+            "variableName": "pin_reset_24h",
+            "operator": "=",
+            "value": "true",
+            "hint": "Credential reset happened in the active risk window."
+          },
+          {
+            "clauseId": "C-3",
+            "variableName": "amount_ratio_30d",
+            "operator": ">=",
+            "value": "5",
+            "hint": "Current transfer is at least 5x the 30-day average."
+          }
+        ]
+      },
+      {
+        "ruleId": "RULE-ATO-STEPUP-009",
+        "name": "Step up dormant wallet recovery",
+        "status": "ACTIVE",
+        "appliesTo": "Dormant wallets",
+        "action": "STEP_UP_VERIFICATION",
+        "version": "v6",
+        "owner": "Account integrity",
+        "lastEditedAt": "2026-04-24T18:40:00+08:00",
+        "freezeThreshold": 82,
+        "rationale": "Hold the session at re-verification first when the wallet reactivates after dormancy and a new payee appears.",
+        "conditions": [
+          {
+            "clauseId": "C-4",
+            "variableName": "is_new_device",
+            "operator": "=",
+            "value": "true",
+            "hint": "New device is still a strong precursor."
+          },
+          {
+            "clauseId": "C-5",
+            "variableName": "amount_ratio_30d",
+            "operator": ">=",
+            "value": "2",
+            "hint": "Lower bar because dormant-wallet reactivation needs earlier friction."
+          }
+        ]
+      },
+      {
+        "ruleId": "RULE-UTX-ESCALATE-003",
+        "name": "Escalate likely post-loss case",
+        "status": "SHADOW",
+        "appliesTo": "Unauthorized transaction review",
+        "action": "ESCALATE",
+        "version": "v3",
+        "owner": "Fraud strategy",
+        "lastEditedAt": "2026-04-23T13:12:00+08:00",
+        "freezeThreshold": 78,
+        "rationale": "Keep this rule in shadow until the linked-device evidence pack is consistently complete.",
+        "conditions": [
+          {
+            "clauseId": "C-6",
+            "variableName": "is_new_device",
+            "operator": "=",
+            "value": "true",
+            "hint": "New-device evidence is mandatory in shadow mode."
+          },
+          {
+            "clauseId": "C-7",
+            "variableName": "amount_ratio_30d",
+            "operator": ">=",
+            "value": "1",
+            "hint": "Post-loss escalation tolerates low amounts if loss already happened."
+          }
+        ]
+      }
     ]
   }
 }

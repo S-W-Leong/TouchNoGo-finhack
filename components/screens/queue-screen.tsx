@@ -2,13 +2,46 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowUpRight, Search } from "lucide-react";
+import {
+  ArrowUpRight,
+  KeyRound,
+  Search,
+  ShieldAlert,
+  Smartphone,
+  UserRoundPlus,
+  Wallet,
+} from "lucide-react";
 
 import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { QueueSnapshot } from "@/lib/repositories/risk-ops-repository";
 
 const filterModes = ["ALL", "CRITICAL", "AUTO_ACTION"] as const;
+
+function formatLabel(value: string) {
+  return value
+    .replaceAll("_", " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function signalIcon(signal: string) {
+  const normalized = signal.toLowerCase();
+
+  if (normalized.includes("device")) {
+    return Smartphone;
+  }
+
+  if (normalized.includes("pin")) {
+    return KeyRound;
+  }
+
+  if (normalized.includes("beneficiary") || normalized.includes("payee")) {
+    return UserRoundPlus;
+  }
+
+  return Wallet;
+}
 
 export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
   const [query, setQuery] = useState("");
@@ -33,39 +66,66 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
   }, [filter, query, snapshot.rows]);
 
   return (
-    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
       <div className="flex min-w-0 flex-col gap-3">
         <SectionCard
           compact
-          title="ATO spike"
-          subtitle={snapshot.banner.segmentLabel}
-          action={<span className="pill mono">{snapshot.banner.numerator}/{snapshot.banner.denominator} expected</span>}
-        >
-          <div className="grid gap-2 md:grid-cols-[110px_minmax(0,1fr)] md:items-center">
-            <div className="rounded-[12px] bg-[var(--surface-dark)] px-3 py-2 text-white">
-              <div className="text-2xl font-semibold">{snapshot.banner.multiplier}x</div>
+          title="Live ATO cluster"
+          subtitle="This is an operator surface. Scan the signal, rank the queue, open the case."
+          action={
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="pill mono">
+                {snapshot.banner.numerator}/{snapshot.banner.denominator} expected
+              </span>
+              <span className="pill">
+                <ShieldAlert size={13} />
+                {snapshot.banner.windowMinutes} min window
+              </span>
             </div>
-            <div className="min-w-0">
-              <div className="truncate text-sm font-medium">
-                {snapshot.banner.signals.join(" | ")}
+          }
+        >
+          <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
+            <div className="rounded-[10px] border border-slate-900/10 bg-[var(--surface-contrast)] px-4 py-4 text-white">
+              <div className="text-xs uppercase tracking-[0.08em] text-white/70">
+                Cluster lift
               </div>
-              <div className="muted mt-1 text-xs">{snapshot.banner.summary}</div>
+              <div className="mt-2 text-4xl font-semibold tracking-tight">
+                {snapshot.banner.multiplier}x
+              </div>
+              <div className="mt-2 text-sm text-white/80">{snapshot.banner.segmentLabel}</div>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-3">
+              {snapshot.banner.signals.map((signal) => {
+                const Icon = signalIcon(signal);
+
+                return (
+                  <div
+                    key={signal}
+                    className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3"
+                  >
+                    <div className="flex items-center gap-2 text-[var(--muted-strong)]">
+                      <Icon size={15} absoluteStrokeWidth />
+                      <span className="text-sm font-semibold">{signal}</span>
+                    </div>
+                    <div className="mt-2 text-xs text-[var(--muted)]">
+                      Signal is visible in ranking only. Final action still follows evidence and policy.
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </SectionCard>
 
         <SectionCard
           compact
-          title="Queue"
-          subtitle="Dense triage view. More rows, less chrome."
-          action={
-            <div className="flex items-center gap-1 text-xs text-[var(--muted)]">
-              <span>{rows.length} shown</span>
-            </div>
-          }
+          title="Investigation queue"
+          subtitle="Dense rows, less chrome, stronger hierarchy."
+          action={<span className="pill mono">{rows.length} visible</span>}
         >
-          <div className="mb-3 flex flex-col gap-2 md:flex-row">
-            <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[10px] border border-[var(--line)] bg-white px-3 py-2">
+          <div className="mb-3 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+            <label className="flex min-w-0 flex-1 items-center gap-2 rounded-[8px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-2">
               <Search size={14} className="text-[var(--muted)]" />
               <input
                 aria-label="Search cases"
@@ -76,7 +136,7 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
               />
             </label>
 
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {filterModes.map((mode) => (
                 <button
                   key={mode}
@@ -87,106 +147,154 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
                   {mode === "ALL"
                     ? "All"
                     : mode === "CRITICAL"
-                      ? "Critical"
+                      ? "Critical only"
                       : "Auto-action"}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="panel overflow-hidden border border-[var(--line)] bg-white/90 shadow-none">
-            <div className="hidden grid-cols-[110px_minmax(0,1.2fr)_minmax(0,1fr)_72px_132px] gap-3 border-b border-[var(--line)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)] lg:grid">
-              <div>Case</div>
-              <div>User / state</div>
-              <div>Why now</div>
-              <div>Score</div>
-              <div>Action</div>
+          <div className="panel overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="dense-table min-w-[1040px]">
+                <thead>
+                  <tr>
+                    <th>Case</th>
+                    <th>User</th>
+                    <th>Signals</th>
+                    <th>State</th>
+                    <th>Score</th>
+                    <th>Next action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.caseId}>
+                      <td>
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-[8px] border border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted-strong)]">
+                            <ShieldAlert size={16} absoluteStrokeWidth />
+                          </div>
+                          <div>
+                            <div className="mono text-xs font-semibold text-[var(--muted)]">
+                              {row.caseId}
+                            </div>
+                            <div className="mt-1 text-sm font-semibold">
+                              {formatLabel(row.scenarioType)}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="text-sm font-semibold">{row.maskedUserLabel}</div>
+                        <div className="mt-1 text-xs text-[var(--muted)]">{row.status.replaceAll("_", " ")}</div>
+                      </td>
+
+                      <td>
+                        <div className="flex flex-wrap gap-1.5">
+                          {row.reasonChips.slice(0, 3).map((reason) => {
+                            const Icon = signalIcon(reason);
+
+                            return (
+                              <span
+                                key={reason}
+                                className="inline-flex items-center gap-1 rounded-[7px] border border-[var(--line)] bg-[var(--surface-subtle)] px-2 py-1 text-xs font-medium text-[var(--muted-strong)]"
+                              >
+                                <Icon size={12} absoluteStrokeWidth />
+                                {reason}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="space-y-1.5">
+                          <StatusBadge label={row.riskLevel} tone={row.riskLevel} />
+                          <div className="text-xs text-[var(--muted)]">
+                            {formatLabel(row.currentControlState)}
+                          </div>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="text-2xl font-semibold tracking-tight">{row.score}</div>
+                        <div className="mt-1 text-xs text-[var(--muted)]">
+                          {row.resolutionState.replaceAll("_", " ")}
+                        </div>
+                      </td>
+
+                      <td>
+                        <Link
+                          href={`/cases/${row.caseId}`}
+                          className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--surface-contrast)] transition-colors hover:bg-[var(--surface-subtle)]"
+                        >
+                          <StatusBadge
+                            label={formatLabel(row.proposedAction)}
+                            tone={row.proposedAction}
+                          />
+                          <span className="inline-flex items-center gap-1">
+                            Open
+                            <ArrowUpRight size={14} absoluteStrokeWidth />
+                          </span>
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-
-            {rows.map((row) => (
-              <Link
-                key={row.caseId}
-                href={`/cases/${row.caseId}`}
-                className="dense-list-row transition-colors hover:bg-slate-50 lg:grid-cols-[110px_minmax(0,1.2fr)_minmax(0,1fr)_72px_132px] lg:items-center"
-              >
-                <div className="min-w-0">
-                  <div className="mono text-xs font-semibold text-[var(--muted)]">
-                    {row.caseId}
-                  </div>
-                  <div className="mt-1 text-xs text-[var(--muted)]">
-                    {row.scenarioType.replaceAll("_", " ")}
-                  </div>
-                </div>
-
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold">{row.maskedUserLabel}</div>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                    <StatusBadge label={row.riskLevel} tone={row.riskLevel} />
-                    <span className="text-xs text-[var(--muted)]">{row.currentControlState}</span>
-                  </div>
-                </div>
-
-                <div className="min-w-0 text-xs text-[var(--muted)]">
-                  {row.reasonChips.slice(0, 3).join(" | ")}
-                </div>
-
-                <div className="flex items-center gap-2 lg:block">
-                  <div className="text-lg font-semibold">{row.score}</div>
-                </div>
-
-                <div className="flex items-center justify-between gap-2">
-                  <StatusBadge
-                    label={row.proposedAction.replaceAll("_", " ")}
-                    tone={row.proposedAction}
-                  />
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--surface-dark)]">
-                    Open
-                    <ArrowUpRight size={13} />
-                  </span>
-                </div>
-              </Link>
-            ))}
           </div>
         </SectionCard>
       </div>
 
       <div className="flex flex-col gap-3 xl:sticky xl:top-3 xl:self-start">
-        <SectionCard compact title="Metrics">
-          <div className="grid grid-cols-2 gap-2">
+        <SectionCard compact title="Queue summary" subtitle="Keep the right rail useful, not decorative.">
+          <div className="grid gap-2">
             {[
-              ["Open", snapshot.metrics.openCases],
-              ["Auto", snapshot.metrics.autoActionReady],
-              ["Pending", snapshot.metrics.pendingUser],
-              ["Stopped", snapshot.metrics.preventedTransfers],
+              ["Open cases", snapshot.metrics.openCases],
+              ["Auto-actions ready", snapshot.metrics.autoActionReady],
+              ["Pending user", snapshot.metrics.pendingUser],
+              ["Transfers stopped", snapshot.metrics.preventedTransfers],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-[10px] border border-[var(--line)] bg-white px-3 py-2">
-                <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
-                  {label}
-                </div>
-                <div className="mt-1 text-lg font-semibold">{value}</div>
+              <div
+                key={label}
+                className="flex items-center justify-between rounded-[8px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-2"
+              >
+                <span className="text-sm text-[var(--muted-strong)]">{label}</span>
+                <span className="mono text-sm font-semibold">{value}</span>
               </div>
             ))}
           </div>
         </SectionCard>
 
-        <SectionCard compact title="Action ladder">
-          <div className="space-y-2 text-sm">
-            {[
-              ["0-69", "ALLOW", "No hold"],
-              ["70-84", "STEP_UP_VERIFICATION", "Pause and verify"],
-              ["85-100", "FREEZE_ACCOUNT", "Stop movement"],
-            ].map(([band, action, note]) => (
-              <div
-                key={band}
-                className="flex items-center justify-between gap-2 rounded-[10px] border border-[var(--line)] bg-white px-3 py-2"
-              >
-                <div>
-                  <div className="mono text-xs">{band}</div>
-                  <div className="text-xs text-[var(--muted)]">{note}</div>
-                </div>
-                <StatusBadge label={action} tone={action as "ALLOW"} />
-              </div>
-            ))}
+        <SectionCard compact title="Action ladder" subtitle="Users should understand the consequence of the score immediately.">
+          <div className="panel overflow-hidden">
+            <table className="dense-table">
+              <thead>
+                <tr>
+                  <th>Band</th>
+                  <th>Outcome</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  ["0-69", "ALLOW", "No hold"],
+                  ["70-84", "STEP_UP_VERIFICATION", "Pause and verify"],
+                  ["85-100", "FREEZE_ACCOUNT", "Stop movement"],
+                ].map(([band, action, note]) => (
+                  <tr key={band}>
+                    <td className="mono text-xs">{band}</td>
+                    <td>
+                      <StatusBadge label={formatLabel(action)} tone={action as "ALLOW"} />
+                    </td>
+                    <td className="text-sm text-[var(--muted)]">{note}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </SectionCard>
       </div>

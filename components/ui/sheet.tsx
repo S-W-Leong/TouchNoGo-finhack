@@ -38,7 +38,7 @@ export function Sheet({
 
             <button
               type="button"
-              className="rounded-full border border-[var(--line)] p-2"
+              className="rounded-[8px] border border-[var(--line)] bg-[var(--surface-subtle)] p-2"
               onClick={onClose}
             >
               <X size={18} />
@@ -51,4 +51,3 @@ export function Sheet({
     </>
   );
 }
-

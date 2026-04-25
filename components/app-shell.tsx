@@ -1,12 +1,18 @@
 import Link from "next/link";
-import { BellDot, Shield } from "lucide-react";
+import {
+  BellDot,
+  FileWarning,
+  LayoutList,
+  Shield,
+  SlidersHorizontal,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/queue", label: "Queue" },
-  { href: "/cases/CASE-ATO-001", label: "Primary Case" },
-  { href: "/controls", label: "Controls" },
+  { href: "/queue", label: "Queue", icon: LayoutList },
+  { href: "/cases/CASE-ATO-001", label: "Primary case", icon: FileWarning },
+  { href: "/controls", label: "Rules", icon: SlidersHorizontal },
 ];
 
 export function AppShell({
@@ -18,52 +24,62 @@ export function AppShell({
 }) {
   return (
     <div className="app-shell">
-      <div className="panel mb-3 px-3 py-2 md:px-4">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-[12px] bg-[var(--surface-dark)] p-2 text-white">
-              <Shield size={15} />
+      <header className="panel mb-3 overflow-hidden">
+        <div className="flex flex-col gap-4 px-4 py-3 md:px-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-800/10 bg-[var(--surface-contrast)] text-white">
+                <Shield size={18} absoluteStrokeWidth />
+              </div>
+
+              <div>
+                <p className="text-[15px] font-semibold tracking-tight">TNG RiskOps Agent</p>
+                <p className="text-sm text-[var(--muted)]">
+                  Account takeover operations workspace
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold tracking-tight">TNG RiskOps Agent</p>
-              <p className="text-xs text-[var(--muted)]">
-                ATO operations workspace
-              </p>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="pill">
+                <BellDot size={13} />
+                21 active investigations
+              </span>
+              <span className="pill">Seeded environment</span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
-            <nav className="flex flex-wrap gap-1">
+          <div className="flex flex-col gap-3 border-t border-[var(--line)] pt-3 lg:flex-row lg:items-center lg:justify-between">
+            <nav className="flex flex-wrap gap-2">
               {navItems.map((item) => {
                 const isActive = currentPath.startsWith(item.href);
+                const Icon = item.icon;
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "rounded-[10px] px-3 py-1.5 text-sm font-semibold transition-colors",
+                      "inline-flex items-center gap-2 rounded-[8px] border px-3 py-2 text-sm font-semibold transition-colors",
                       isActive
-                        ? "bg-[var(--surface-dark)] text-white shadow-sm"
-                        : "bg-white text-[var(--muted)]",
+                        ? "border-slate-900 bg-slate-900 text-white"
+                        : "border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted-strong)]",
                     )}
                   >
+                    <Icon size={15} absoluteStrokeWidth />
                     {item.label}
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="flex items-center gap-2 lg:ml-3">
-              <span className="pill">
-                <BellDot size={12} />
-                21 active
-              </span>
-              <span className="pill">Seeded</span>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">
+              <span className="mono">seed demo-core-v1</span>
+              <span>Decisioning remains deterministic. Human override stays visible.</span>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
       {children}
     </div>
