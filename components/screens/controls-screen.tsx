@@ -247,7 +247,7 @@ export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) 
                       key={rule.ruleId}
                       className={
                         rule.ruleId === selectedRuleId
-                          ? "bg-slate-900/[0.03]"
+                          ? "bg-[var(--surface-hover)]"
                           : undefined
                       }
                     >

@@ -85,7 +85,7 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
           }
         >
           <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)]">
-            <div className="rounded-[10px] border border-slate-900/10 bg-[var(--surface-contrast)] px-4 py-4 text-white">
+            <div className="rounded-[var(--radius-md)] border border-[var(--line)] bg-[var(--surface-contrast)] px-4 py-4 text-white">
               <div className="text-xs uppercase tracking-[0.08em] text-white/70">
                 Cluster lift
               </div>
@@ -228,7 +228,7 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
                       <td>
                         <Link
                           href={`/cases/${row.caseId}`}
-                          className="inline-flex items-center gap-2 rounded-[8px] border border-[var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[var(--surface-contrast)] transition-colors hover:bg-[var(--surface-subtle)]"
+                          className="inline-flex items-center gap-2 rounded-[var(--radius-md)] border border-[var(--line-strong)] bg-[var(--surface-strong)] px-3 py-2 text-sm font-semibold text-[var(--text)] transition-colors hover:bg-[var(--surface-hover)]"
                         >
                           <StatusBadge
                             label={formatLabel(row.proposedAction)}

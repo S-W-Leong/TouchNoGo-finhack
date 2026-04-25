@@ -67,7 +67,7 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
           }
         >
           <div className="grid gap-2 md:grid-cols-4">
-            <div className="rounded-[10px] border border-slate-900/10 bg-[var(--surface-contrast)] px-3 py-3 text-white">
+            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-contrast)] px-3 py-3 text-white">
               <div className="text-[11px] uppercase tracking-[0.08em] text-white/70">Score</div>
               <div className="mt-2 text-3xl font-semibold tracking-tight">{record.score}</div>
             </div>
@@ -309,16 +309,16 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
           subtitle={record.recommendation.rationale}
         >
           <div className="grid gap-2">
-            <div className="rounded-[10px] border border-slate-900/10 bg-[var(--surface-contrast)] px-3 py-3 text-white">
+            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-contrast)] px-3 py-3 text-white">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold">
                   {formatLabel(record.recommendation.action)}
                 </div>
                 <div className="mono text-xs">{confidence}%</div>
               </div>
-              <div className="mt-3 h-2 rounded-full bg-white/10">
+              <div className="mt-3 h-1.5 bg-white/10">
                 <div
-                  className="h-full rounded-full bg-white"
+                  className="h-full bg-[var(--tng-orange)]"
                   style={{ width: `${confidence}%` }}
                 />
               </div>
