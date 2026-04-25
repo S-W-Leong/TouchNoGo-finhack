@@ -7,46 +7,46 @@ Method: official vendor product pages, product docs, vendor case studies, the Un
 
 ## Executive Summary
 
-The strongest reading of this market is not "fraud detection startups."
+This market is not really about "fraud detection startups."
 
-It is:
+It is about fraud and AML operating systems:
 
-- fraud and AML operations platforms
-- risk decisioning systems
-- analyst workbenches
-- graph and entity investigation tools
-- case management and reporting systems
-- increasingly, AI-assisted triage and workflow layers
+- detection and routing
+- investigation and case work
+- actioning and approvals
+- reporting and audit
+- safe tuning
+- AI inside the ops loop
 
-Unit21 is a good anchor because it sits in the middle of that category. It is not just a model vendor and not just a sanctions data vendor. It is a fraud/AML operations platform with rule authoring, alert handling, graph investigation, case actions, and now AI-assisted investigation.
+Unit21 is the right anchor because it sits in the middle of that stack. It is not only a model vendor and not only a sanctions vendor. It is a rule, alert, graph, case, action, and investigation product.
 
 The market is converging around a common stack:
 
 1. real-time detection and scoring
-2. no-code rule/workflow management
+2. no-code rule and workflow management
 3. alert prioritization and routing
-4. entity/network investigation
+4. entity and network investigation
 5. case management with audit trails
-6. AML/sanctions/screening add-ons or full FRAML convergence
-7. AI to reduce manual review, draft narratives, and recommend actions
+6. AML, sanctions, or screening add-ons, often inside a FRAML frame
+7. AI that reduces manual review, drafts notes, and recommends next steps
 
-What real fraud ops teams actually want is much narrower than what vendors pitch:
+What real fraud ops teams want is much narrower than vendor marketing:
 
 - fewer false positives
 - faster triage
-- one screen with full context
-- the ability to change controls without engineering tickets
-- safe testing before production
-- graph or entity linkage that changes decisions, not just a pretty diagram
-- immediate analyst actions like hold, step-up, escalate, freeze, suspend, or export
-- regulator-ready notes, audit trails, and filings
+- one screen with the whole case
+- controls they can change themselves
+- safe testing before rollout
+- graph linkage that changes action
+- immediate actions like `hold`, `step-up`, `escalate`, `freeze`, or export
+- regulator-ready notes and audit trails
 
-That means the TNG hackathon direction should stay exactly where the repo is already drifting:
+Decision pullout for TNG:
 
-- not another dashboard
-- not just AML screening
-- not just a score
-- build the pre-payout decision workspace above existing controls
+- do not build another dashboard
+- do not lead with AML screening
+- do not pitch a black-box score
+- do build the pre-payout decision workspace above existing controls
 
 ## Scope
 
@@ -963,13 +963,9 @@ The winning pattern is:
 - human owns high-risk decisions
 - full audit trail is preserved
 
-## Best Product Lessons for TNG
+## TNG Pullout
 
-If the goal is to win `Security & Fraud`, the research points to a very clear product shape.
-
-## What to build
-
-Build:
+If the goal is to win `Security & Fraud`, the research points to one product shape:
 
 - a pre-payout decision workspace
 - one hero case
@@ -977,90 +973,43 @@ Build:
 - one investigation graph
 - one action rail
 - one export-ready note
-- one replay or simulator moment
+- one replay moment
 
-## Must-have MVP features
+## What Fraud Ops Teams Want First
 
-### 1. Queue prioritization
+This is the priority order from the operator side, not the demo side:
 
-Show:
+1. fewer false positives and better prioritization
+2. one screen with the whole case
+3. rules and workflows they can change safely
+4. graph and entity linkage that changes action
+5. clear actions plus audit-ready output
+6. AI for repetitive work, not vague "AI scoring"
 
-- highest-risk cases first
-- reason chips
-- risk level
-- next recommended action
+## What To Build First For The Hackathon
 
-### 2. One-screen case workspace
+This is the priority order for the weekend build:
 
-Put in one view:
+This is the product-feature order.
+Multi-cloud is handled separately because it is a judging requirement, not a fraud-ops feature.
 
-- facts
-- AI inferences
-- timeline
-- linked entities
-- device / beneficiary / counterparty context
-- triggered controls
-- analyst notes
+1. End-to-end hero case that ends in `hold`, `step-up`, or `escalate`.
+   Why: without a visible action, the story dies.
+2. One-screen case workspace.
+   Show: facts, AI inferences, timeline, linked entities, triggered controls, and notes.
+3. Action rail with human approval and note export.
+   Minimum: `allow`, `step-up`, `hold`, `escalate`, `export note`.
+4. Evidence-backed recommendation and missing-information panel.
+   Why: this is the strongest AI story.
+5. Network view tied to the action.
+   Show: shared IP, shared beneficiary, shared device, shared merchant, near-watchlist link.
+6. Rule or policy replay.
+   Show: current threshold, stricter threshold, caught bad payments, delayed good payments.
+7. Queue prioritization and reason chips.
+   Show: highest-risk cases first, risk level, next action, backup case for Q&A.
+8. Thin customer step-up moment only if the first seven are already solid.
 
-### 3. Action rail
-
-At minimum:
-
-- allow
-- step-up
-- hold
-- escalate
-- export note
-
-If the system cannot lead to action, it will feel incomplete.
-
-### 4. Fact vs inference separation
-
-This is essential for trust.
-
-Show:
-
-- confirmed signals
-- inferred risk
-- missing information
-
-separately.
-
-### 5. Network view
-
-The graph should do more than look cool.
-
-Use it to explain:
-
-- shared IP
-- shared beneficiary
-- shared device
-- shared merchant
-- near-watchlist link
-
-### 6. Rule or policy replay
-
-This is one of the sharpest differentiators in the repo already.
-
-Show:
-
-- current threshold
-- stricter threshold
-- tradeoff between caught bad payments and delayed good payments
-
-### 7. Audit-ready note export
-
-Even a lightweight case note or SAR-style draft makes the system feel real.
-
-### 8. Human-in-the-loop proof
-
-Be explicit:
-
-- AI recommends
-- human approves
-- action is logged
-
-## Nice-to-have if time allows
+## Nice To Have If Time Allows
 
 - AI-generated rule suggestion
 - screening false-positive suppression
@@ -1068,7 +1017,7 @@ Be explicit:
 - junior vs senior queue routing
 - direct step-up user intervention view
 
-## What to avoid
+## What To Avoid
 
 - a generic AML screen as the homepage
 - five disconnected pages for different tools
@@ -1076,9 +1025,9 @@ Be explicit:
 - vague "AI found risk" copy
 - multi-cloud architecture that does not visibly matter
 
-## The Best Vendors to Learn From for TNG
+## Best Vendors To Borrow From
 
-If you only have time to borrow from a few vendors, study these:
+If you only have time to borrow from a few vendors, use these:
 
 ### Unit21
 
@@ -1093,8 +1042,8 @@ Best for:
 
 Best for:
 
-- rules + graph + case management + backtesting
-- fraud/AML convergence
+- rules, graph, case management, and backtesting
+- fraud and AML convergence
 - agentic investigations that still feel operational
 
 ### Hawk
@@ -1104,7 +1053,7 @@ Best for:
 - real-time payment focus
 - explainability
 - interdiction and payment actioning
-- screening + fraud in one risk frame
+- screening plus fraud in one risk frame
 
 ### SEON
 
@@ -1131,7 +1080,7 @@ Best for:
 - ongoing lifecycle monitoring
 - attack containment and safe-mode logic
 
-## My Blunt Read on the Market
+## My Blunt Read On The Market
 
 The market has already decided that:
 
@@ -1143,14 +1092,14 @@ The market has already decided that:
 The winning category is:
 
 - detection
-- plus investigation
-- plus action
-- plus reporting
-- plus safe tuning
+- investigation
+- action
+- reporting
+- safe tuning
 
 inside one operating system for risk teams.
 
-That is why your repo's current direction is stronger than the original `AML + sanctions screener` idea.
+That is why this repo is stronger as a pre-payout decision workspace than as an `AML + sanctions screener`.
 
 The better question is not:
 
@@ -1160,11 +1109,7 @@ It is:
 
 - "Can we help an analyst decide faster, with better evidence, before money leaves?"
 
-That is the right `Security & Fraud` wedge.
-
 ## Suggested TNG Product Sentence
-
-Use something close to this:
 
 `TNG RiskOps Agent is an AI-native pre-payout decision workspace that turns fraud and AML alerts into evidence-backed actions, analyst-ready case notes, and replayable policy tradeoffs.`
 
@@ -1179,8 +1124,6 @@ Use something close to this:
 7. Show the replay lab changing a policy threshold and the caught-vs-friction tradeoff.
 
 ## Office-Hours Wedge Test
-
-Using the `office-hours` forcing-question lens, the best wedge here is even narrower than "fraud ops."
 
 ### 1. Who is the desperate user?
 
@@ -1248,17 +1191,14 @@ If the wedge works, expansion paths are obvious:
 - direct customer rescue moments
 - policy simulator and governance tooling
 
-That expansion path is much healthier than starting broad and hoping to find focus later.
-
 ## Source Notes
 
 ### Repo sources
 
 - `README.md`
 - `AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md`
-- `TODOS.md`
-- `wbrya-unknown-design-20260425-101346.md`
 - `index.html`
+- `tng-doc-by-shiwei.md`
 
 ### Unit21 screenshot sources
 

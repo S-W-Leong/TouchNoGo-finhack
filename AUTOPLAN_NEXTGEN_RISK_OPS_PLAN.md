@@ -7,92 +7,108 @@ Mode: `SELECTIVE_EXPANSION`
 Status: ready for implementation
 Voice source: `codex-only` in this run
 
-## Plan Summary
+## What This Doc Does
 
-Build an AI-native financial crime operations layer for TNG.
+Use this file for:
 
-Do not pitch another fraud dashboard, another rules engine, or another sanctions checker.
-Pitch the layer above them:
+- MVP scope
+- ranked build order
+- architecture
+- design contract
+- test and risk plan
+- demo sequence
+- CTO and mentor questions
+- post-MVP backlog
 
-- ingest existing risk signals
-- resolve them into an evidence graph
-- run specialist agents to investigate
-- recommend the next action with evidence and policy citations
-- draft regulator-ready reports
-- replay synthetic attack scenarios before shipping new controls
+Do not use this file for:
 
-Short version: move from `alert -> analyst queue` to `alert -> investigation -> action -> report -> replay`.
+- hackathon logistics
+- deep vendor research
+- pitch-script detail
 
-## Rubric Guardrails (Day 1 Judging Notes)
+Those live in `tng-doc-by-shiwei.md` and `FRAUD_OPS_MARKET_RESEARCH_2026-04-25.md`.
 
-1. **AI must be justified.**
-   - Do not add LLMs everywhere.
-   - Use AI where it helps with evidence assembly, action recommendation, policy reasoning, report drafting, or replay tradeoffs.
-   - Use deterministic rules where deterministic rules are stronger.
+## Current Call
 
-2. **The prototype must survive follow-up.**
-   - A strong first 30 seconds means nothing if the second click breaks.
-   - Edge cases, degraded states, and security posture matter.
+- Track: `Security & Fraud`
+- Product: `AI-native pre-payout decision workspace for fraud + AML ops`
+- Hero case: `cross-border near-watchlist payout`
+- Hero replay: `watchlist-payout`, the watchlist threshold tradeoff replay
+- Wedge: `evidence graph + specialist agents + human action rail + replay lab`
 
-3. **Two clouds must do real work.**
-   - One cloud for the app and seeded data, another for AI or replay is fine if the split has a real reason.
-   - Cosmetic multi-cloud loses.
+One-line pitch:
 
-4. **Impact has to be real and visible fast.**
-   - The real user is the fraud or AML analyst.
-   - The pain is a risky flow that needs a decision before payout.
-   - The demo must make that pain and intervention obvious in under 4 minutes.
+`TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
 
-5. **Presentation is load-bearing.**
-   - Clean deck, clean README, one sharp case, one sharp replay story.
-   - No feature stuffing.
+Short version:
 
-## Strongest Challenge To The Original Direction
+`alert -> investigation -> action -> report -> replay`
 
-Original direction:
-- `real-time AML + sanctions screener`
+## Guardrails From The Rubric
 
-Recommended direction:
-- `agentic investigation and response layer`, with sanctions screening as one input
+1. AI must be justified.
+   Use AI for evidence assembly, action recommendation, policy reasoning, note drafting, and replay tradeoffs.
+   Do not use AI where rules are stronger.
+2. The prototype must survive follow-up.
+   A good first click means nothing if the second click breaks.
+3. Two clouds must do real work.
+   One cloud for app and seeded data, one for AI or replay, with a real reason for the split.
+4. Impact has to be real and visible fast.
+   The user is the fraud or AML analyst making a decision before payout.
+5. Presentation is load-bearing.
+   One sharp case beats feature stuffing.
 
-Why:
-- generic screening already exists everywhere
-- a prettier queue does not beat TNG's current stack or the market leaders
-- the gap is analyst leverage, explanation quality, policy traceability, and replay/simulation
+## Ranked Build Order
 
-What changes:
-- the demo becomes clearly next-gen
-- the UI stops looking like an alert list
-- the hackathon story becomes "we make existing controls smarter" instead of "we rebuilt controls badly"
+1. End-to-end hero case that ends in a visible pre-payout action.
+   Build: seeded alert -> evidence -> recommendation -> human `hold`, `step-up`, or `escalate` -> export note.
+   Why: without this, the product story fails.
+2. One-screen investigation workspace.
+   Build: facts, AI inferences, evidence timeline, linked entities, triggered controls, uncertainty, and action rail.
+   Why: this is the real fraud-ops pain.
+3. Evidence-backed AI recommendation, human approval, and note export.
+   Build: specialist agents, policy citations, missing-data requests, confidence, grounded rationale, and export-ready notes.
+   Why: this is the strongest AI justification.
+4. Purposeful multi-cloud split.
+   Build: app and seeded data on one cloud, AI or replay on the second, with one sentence judges can repeat back.
+   Why: hard judging requirement.
+5. Replay lab for one policy tradeoff.
+   Build: current threshold vs stricter threshold, caught bad payments vs delayed good payments.
+   Why: strongest differentiator and something real fraud ops teams want.
+6. Queue ranking and one backup case.
+   Build: reason chips, risk level, next action, second scenario for Q&A.
+   Why: improves realism, but only after the hero case works.
+7. Thin customer step-up moment, only if the first six are stable.
+   Why: useful for the "before money leaves" story, but easy to overscope.
 
-## Phase 0: Scope Lock
+## Scope Lock
 
 ### In scope for the hackathon MVP
 
 1. Ingest fake or seeded events from fraud rules, watchlist matches, device risk, and merchant anomalies.
 2. Resolve users, wallets, devices, merchants, and beneficiaries into one case graph.
-3. Run specialist agents that produce facts, inferences, missing data requests, and recommended actions.
+3. Run specialist agents that produce facts, inferences, missing-data requests, and recommended actions.
 4. Show an investigator workspace with evidence, uncertainty, next steps, and action buttons.
 5. Generate a case note or SAR-style draft from the evidence ledger.
-6. Include a replay/simulator tab for synthetic attack scenarios.
+6. Include a replay or simulator tab for synthetic attack scenarios.
 
-### NOT in scope
+### Not in scope
 
-- Replacing TNG's core payments switch.
-- Building a full sanctions provider or external screening network.
-- Training a proprietary fraud model from production traffic.
-- Full consumer app redesign.
-- Live bank, telco, or government integrations.
-- Automatic irreversible enforcement without human approval.
-- Full multilingual customer rescue workflow.
-- Production-grade event streaming infra.
+- Replacing TNG's core payments switch
+- building a full sanctions provider or external screening network
+- training a proprietary fraud model from production traffic
+- full consumer app redesign
+- live bank, telco, or government integrations
+- automatic irreversible enforcement without human approval
+- full multilingual customer rescue workflow
+- production-grade event streaming infrastructure
 
-## What Already Exists
+## Reuse And Current Assets
 
 ### In the repo
 
-- `README.md`: idea inventory and ranked startup analogs
-- `index.html`: plain-language fake queue UI with cases, reasons, and detail panel
+- `README.md`: current call and doc map
+- `index.html`: seeded queue UI, cases, and replay scenarios
 
 ### In the product environment
 
@@ -101,15 +117,36 @@ What changes:
 
 ### In the market
 
-- Sardine, Feedzai, Hawk, ComplyAdvantage, Flagright, and Unit21 already cover alerting, screening, monitoring, and case management
+- Sardine, Unit21, Feedzai, Hawk, ComplyAdvantage, and Flagright already cover alerting, screening, monitoring, and case management
 
 ### Reuse decision
 
-- Reuse current queue/detail UI structure from `index.html` as the base interaction pattern
-- Reuse the original `AML + sanctions` idea as one agent inside the system
-- Do not rebuild consumer authentication, raw risk scoring, or watchlist search from scratch
+- Reuse the current queue and detail interaction pattern from `index.html`
+- keep the original `AML + sanctions` idea as one agent inside the system
+- do not rebuild consumer authentication, raw risk scoring, or watchlist search from scratch
 
-## Dream State Delta
+## Why This Direction Wins
+
+The original direction was `real-time AML + sanctions screener`.
+
+That is too weak now because:
+
+- generic screening already exists everywhere
+- a prettier queue does not beat TNG's current stack or the market leaders
+- the open gap is analyst leverage, explanation quality, policy traceability, and replay
+
+The product should sit above existing controls, not compete with them.
+
+That means:
+
+- not another alert dashboard
+- not another sanctions checker
+- not another score
+- yes to local TNG abuse patterns
+- yes to explainable action recommendations
+- yes to safe control tuning before rollout
+
+## 12-Month Story Vs Hackathon Story
 
 ### 12-month ideal
 
@@ -122,81 +159,24 @@ What changes:
 
 ### Hackathon delta
 
-The MVP reaches roughly 60% of the story:
+The MVP reaches about 60% of the story:
 
-- yes: graph + agents + workspace + report draft + replay lab
-- no: live integrations, production controls, real model feedback loops, full policy compiler
+- yes: graph, agents, workspace, report draft, replay lab
+- no: live integrations, production controls, real feedback loops, full policy compiler
 
-## Market Read: What Wins Now
+## Product Spec
 
-### What the best companies already do
+### Primary user
 
-| Company | Current edge | What to learn |
-|---|---|---|
-| Sardine | unified fraud + compliance + graph-style reasoning + decisioning | one system, not point tools |
-| Unit21 | agentic workflow across detection, investigation, and reporting | investigator leverage, not just scoring |
-| Feedzai | end-to-end financial crime platform with AI and network intelligence | intelligence + operations in one place |
-| Hawk | monitoring + case management + AI investigation tooling | investigation workflow matters |
-| ComplyAdvantage | screening + monitoring + risk data with AI assistance | policy/compliance has to stay auditable |
-| Flagright | AI-native AML/fraud monitoring + case ops | real-time plus explainability |
-
-### What still feels open
-
-The open wedge is not "do what they do, but smaller."
-
-The open wedge is:
-
-- local TNG-specific wallet abuse patterns
-- regulator-safe agentic investigation
-- simulator/backtesting for scam and AML controls
-- plain-language action recommendations with evidence provenance
-
-## CEO Review
-
-### Premises that were wrong
-
-1. "Differentiation comes from more rules."
-   No. That is table stakes.
-
-2. "The demo should start with sanctions screening."
-   No. Screening is one signal, not the product.
-
-3. "A good risk UI is a better alert table."
-   No. The winning UI is a decision workspace.
-
-4. "LLMs mainly summarize."
-   No. The value is tool-using investigation, policy reasoning, and narrative assembly.
-
-5. "We should compete with TNG's existing controls."
-   No. The product should sit above them and make them easier to operate.
-
-### Product definition
-
-Working name: `TNG RiskOps Agent`
-
-One-line pitch:
-- `An AI-native investigation layer that turns TNG fraud and AML alerts into evidence-backed actions, SAR drafts, and replayable policy decisions.`
-
-### Why judges care
-
-- direct fit to Security and Fraud
-- grounded in a real operator pain: too many alerts, too much manual triage, too much report writing
-- looks new because it compresses analyst work, not because it adds another chart
-- easy to demo with fake data and fake policy packs
-- easier to defend under Q&A because the AI is doing reasoning and assembly work, not pretending to be a magic fraud oracle
-- naturally supports a purposeful two-cloud story if the app and AI/replay workloads are split cleanly
-
-### User
-
-Primary user:
 - fraud ops analyst
 
-Secondary users:
+### Secondary users
+
 - AML investigator
 - compliance lead
 - risk product manager
 
-Core jobs to be done:
+### Core jobs to be done
 
 - tell me which cases matter first
 - show me why
@@ -207,25 +187,84 @@ Core jobs to be done:
 
 ### Opinionated product choices
 
-- the product is internal-first, not consumer-first
-- facts and AI inferences are visually separated
+- internal-first, not consumer-first
+- facts and AI inferences stay visually separate
 - high-risk actions always require human approval
-- replay/simulator ships in MVP because that is the clearest next-gen differentiator
+- replay stays in MVP because it is the clearest next-gen differentiator
 - sanctions screening is an agent, not the homepage
 
-### CEO DUAL VOICES - CONSENSUS TABLE
+### All review threads agreed on
 
-| Dimension | Codex | Claude subagent | Consensus |
-|---|---|---|---|
-| Another alert dashboard is enough | No | N/A | single-voice: reject |
-| Build above existing controls | Yes | N/A | single-voice: approve |
-| Agentic investigation should be core | Yes | N/A | single-voice: approve |
-| Replay lab belongs in MVP | Yes | N/A | single-voice: approve |
-| Consumer app redesign needed | No | N/A | single-voice: reject |
-| Full core risk engine replacement | No | N/A | single-voice: reject |
+- build above existing controls
+- keep agentic investigation core
+- reject queue-only UI
+- keep replay in scope
+- reject consumer redesign for MVP
+- reject full core risk engine replacement
 
-Subagent note:
-- not run in this session; no delegation was used
+## Design Contract
+
+### Why this wins
+
+The strong version of this product is not one more risk score.
+
+The strong version is:
+
+1. one live case that already groups wallet, device, beneficiary, watchlist, and policy evidence
+2. separate specialist agents showing what each one checked
+3. a human-readable action recommendation with confidence and policy lines
+4. a visible human action before money leaves
+5. a replay lab that shows the tradeoff before a rule change ships
+
+That is a sharper story than "we built fraud detection."
+
+### Design rules
+
+1. Make it a decision workspace, not an alert table.
+2. Keep the story on intervention before payout, not post-incident reporting.
+3. Separate facts from AI inferences everywhere.
+4. Keep human approval visible on high-risk actions.
+5. Keep replay visible because it is the clearest next-gen moment.
+6. Stay internal-first. Only show a customer-facing moment if it sharpens the core story.
+
+### Screen contract
+
+The UI should feel like `mission control for one case`, not `an inbox of scary rows`.
+
+Left rail:
+
+- ranked cases
+- reason chips
+- agent status
+
+Center:
+
+- evidence timeline
+- graph of connected entities
+- fact blocks
+- inference blocks
+- missing-data requests
+
+Right rail:
+
+- recommended action
+- policy citations
+- confidence
+- analyst `approve`, `hold`, `step-up`, or `escalate`
+- export note or SAR-style draft
+
+Second tab:
+
+- Scenario Lab
+
+### What the design must prove
+
+1. The analyst can see the highest-priority case in 3 seconds.
+2. The analyst can tell fact vs AI inference instantly.
+3. The analyst can see why the recommendation was made.
+4. The analyst can take the next action without switching tools.
+5. The design shows something TNG likely does not already have.
+6. A non-expert judge can follow the demo without compliance jargon.
 
 ## Error & Rescue Registry
 
@@ -749,13 +788,196 @@ Magical moment:
 7. Change one threshold or policy value and rerun.
 8. If there is still time, show a second scenario such as `dormant-wallet takeover` or `merchant / mule-ring abuse`.
 
-## Deferred To TODOS.md
+## CTO And Mentor Questions
 
-- production watchlist adapters
-- customer rescue workflow
-- feedback learning loop
-- cross-border remittance pack
-- policy compiler and versioning UI
+Ask these in order. Stop when you get a strong answer.
+
+1. If we build above your existing controls instead of replacing them, where is the biggest pain today: alert triage, evidence gathering, action approval, SAR drafting, or policy tuning?
+2. For this hackathon, which feels more real to you: a better analyst decision workspace, or a customer-facing scam intervention right before payout?
+3. Which single abuse pattern should we make the hero case if we want it to feel closest to TNG reality: dormant-wallet takeover, mule-ring collection, merchant QR abuse, near-watchlist cross-border payout, or onboarding synthetic identity?
+4. When you hear "meaningful AI" here, what do you actually want to see beyond summarization: evidence linking, action recommendation, policy reasoning, report drafting, or replay?
+5. What would make the multi-cloud split feel purposeful instead of cosmetic to you?
+6. If the system recommends `hold`, `step-up`, or `escalate`, what evidence would you need to trust that recommendation?
+7. If we only get one "whoa" moment in four minutes, should it be the live case investigation or the replay lab?
+8. If this were piloted on Monday with fake data removed, what is the narrowest workflow you would actually test first?
+
+## Submission And Demo Readiness
+
+1. In under 4 minutes, a judge must see one case move from signal to evidence to action to exported note.
+2. The AI story must be clear: separate agents, grounded evidence, explicit uncertainty, human approval.
+3. The track fit must be obvious: the system stops or challenges risky money movement before release.
+4. The multi-cloud split must be explainable in one sentence and one diagram.
+5. One replay scenario must show a real tradeoff: more bad payouts stopped versus more normal users delayed.
+6. The repo must be public-safe, easy to run, and free of leaked credentials.
+
+Judges get the product through:
+
+1. one public web URL
+2. one public GitHub repo
+3. one pitch deck link
+4. one short demo video
+
+For the build:
+
+1. host the app and seeded data on one cloud in a way you can demo reliably
+2. place AI or replay on the second cloud for a real architecture reason
+3. keep deployment boring, manual if necessary, but repeatable
+4. record a backup walkthrough so a network problem does not kill the pitch
+
+## Post-MVP Backlog
+
+### P1 - Customer rescue workflow
+
+What:
+
+- Add a step-up flow for suspected scam victims before irreversible transfers.
+
+Why next:
+
+- This is the strongest product expansion after the internal analyst workspace.
+- Detection alone does not stop authorized push-payment scams.
+
+Pros:
+
+- stronger user impact story
+- makes the "before money leaves" promise visible to non-ops judges and buyers
+
+Cons:
+
+- much more product surface
+- false positives can annoy users
+
+Context:
+
+- Keep this out of the hackathon MVP.
+- The right next step is a thin intervention surface with plain-language explanations, a delay option, and a safe escalation path.
+
+Depends on:
+
+- reliable confidence thresholds
+- approval policy from compliance
+
+### P1 - Production watchlist adapters
+
+What:
+
+- Replace fake watchlist hits with provider adapters and cached result handling.
+
+Why next:
+
+- The MVP can demo the workflow, but a production story needs real screening inputs.
+- Screening should stay one signal inside the investigation layer, not become the whole product again.
+
+Pros:
+
+- makes the product credible beyond the hackathon
+- unlocks real sanctions and PEP coverage
+
+Cons:
+
+- vendor integration work
+- more edge cases around rate limits, stale data, and normalization
+
+Context:
+
+- The current hackathon plan is right.
+- The production version needs adapter boundaries so the graph and agent stack do not care which provider supplied the match.
+
+Depends on:
+
+- stable `SignalSource` schema
+- adapter interface design
+
+### P1 - Analyst feedback learning loop
+
+What:
+
+- Capture analyst overrides and feed them back into prompts, policies, and scenario design.
+
+Why next:
+
+- Without feedback, the agents stay static.
+- Local fit to TNG-specific abuse patterns will matter more than generic vendor playbooks.
+
+Pros:
+
+- continuous improvement
+- better local fit for TNG-specific abuse patterns
+
+Cons:
+
+- requires careful label quality
+- can turn into noisy feedback plumbing
+
+Context:
+
+- The MVP already has human approvals.
+- The next move is to log why analysts changed the recommendation, then use that data in weekly prompt and policy reviews.
+
+Depends on:
+
+- action approval events
+- evidence ledger stability
+
+### P2 - Cross-border remittance pack
+
+What:
+
+- Add remittance-specific entities, scenarios, and policy templates.
+
+Why later:
+
+- Cross-border is a strong wedge, but the base wallet, beneficiary, device, and policy graph has to be stable first.
+
+Pros:
+
+- wider coverage
+- stronger compliance story
+
+Cons:
+
+- more domain complexity
+- larger seeded data surface
+
+Context:
+
+- The current MVP focuses on wallet, merchant, device, and beneficiary patterns.
+- Remittance should be a second vertical after the base graph is stable.
+
+Depends on:
+
+- base entity graph
+- policy templating
+
+### P3 - Policy compiler and versioning UI
+
+What:
+
+- Turn policy JSON into readable rules with version history, diffing, and replay outputs.
+
+Why later:
+
+- It is strong governance tooling, but it is not ahead of the core decision loop.
+
+Pros:
+
+- strong governance story
+- easier handoff between product, ops, and compliance
+
+Cons:
+
+- more UI and state management
+- adds work outside the MVP's core loop
+
+Context:
+
+- The MVP can keep policies in one file and show the active version.
+- A later version should let users compare `before/after` impact across scenarios.
+
+Depends on:
+
+- scenario runner
+- stable policy schema
 
 ## Decision Audit Trail
 
@@ -793,7 +1015,7 @@ Do not build this:
 
 ### Next implementation slices
 
-1. schema + seeded data
-2. evidence graph + orchestrator
-3. workspace UI
-4. report draft + replay lab
+1. hero case + seeded data + case ingest path
+2. workspace UI + facts vs inferences + action rail
+3. evidence graph + orchestrator + grounded recommendation
+4. note export + replay lab + multi-cloud proof

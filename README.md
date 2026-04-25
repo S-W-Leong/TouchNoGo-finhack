@@ -1,137 +1,84 @@
 # TNG RiskOps Agent
 
-Current call for this repo:
+## Current Call
 
 - Track: `Security & Fraud`
 - Product: `AI-native pre-payout decision workspace for fraud + AML ops`
-- Hero case: `case-301` in [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1352)
-- Hero replay: `watchlist-payout`
-- Winning wedge: `evidence graph + specialist agents + human action rail + replay lab`
+- Hero case: `case-301`, the `cross-border near-watchlist payout` case in [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1352)
+- Hero replay: `watchlist-payout`, the watchlist threshold tradeoff replay
+- Wedge: `evidence graph + specialist agents + human action rail + replay lab`
 
-This repo is no longer "which idea should we do?" territory.
+One-line pitch:
 
-It already has a direction:
+`TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
 
-1. do **not** pitch another flat alert queue
-2. do **not** pitch generic AML screening as the whole product
-3. pitch the layer **above** existing controls, where analysts decide whether to `step-up`, `hold`, `escalate`, or export a report before money leaves
+This repo is past ideation.
 
-## Why This Can Win
+Do not build:
 
-### 1. AI & Intelligent Systems
-- Use the right AI for the right job.
-- No LLM theater.
-- The strongest AI story here is evidence linking, action recommendation, policy reasoning, report drafting, and replaying policy tradeoffs.
-- If a deterministic rule is better, say so.
+- another flat alert queue
+- a generic AML screening homepage
+- a black-box score with no evidence
+- a graph tab with no action
+- multi-cloud theater
 
-### 2. Technical Implementation
-- A beautiful first 30 seconds that collapses under Q&A loses.
-- The prototype has to survive edge cases, seeded scenario changes, and security questions.
-- The strongest technical path is one seeded end-to-end case flow, not five half-built systems.
+## Build Order
 
-### 3. Multi-Cloud Service Usage
-- Two clouds must do real work.
-- One cloud can hold the app or seeded data path.
-- The second cloud should own AI, replay, or a clearly justified workload.
-- "We used both because the rules said so" is a losing answer.
+Build in this order. Stop adding scope when the earlier item is still weak.
 
-### 4. Impact & Feasibility
-- The product needs a real user and a real pain.
-- For this repo, that user is the fraud or AML analyst.
-- The pain is not "fraud exists." The pain is "signals fired, money is about to move, and a human still has to decide fast."
-- Real impact is necessary, but in a hackathon it still needs a memorable moment.
-
-### 5. Presentation & Teamwork
-- A worse idea can beat a better idea if the pitch is cleaner.
-- The story must be straight:
-  - what happened
-  - what the AI checked
-  - what the human should do
-  - what policy change the replay lab suggests
-- Design quality, documentation quality, and demo calm all matter.
-
-## Current Product Story
-
-One sentence:
-
-> `TNG RiskOps Agent turns fraud and AML alerts into evidence-backed pre-payout decisions, export-ready case notes, and replayable policy tradeoffs.`
-
-What judges should see:
-
-1. one case opens already grouped into a single workspace
-2. facts and AI inferences are separated
-3. specialist agents explain what each one checked
-4. the system recommends `hold`, `step-up`, or `escalate`
-5. the analyst can export a note
-6. the team replays a policy threshold change and shows the cost of being stricter
-
-## Scam Patterns To Keep In Scope
-
-These are the most relevant patterns to anchor the demo around:
-
-1. near-watchlist cross-border payout
-2. dormant-wallet takeover after device change
-3. mule-account or third-party account misuse
-4. malware or phishing-assisted compromise
-5. merchant QR or payout abuse
-
-Good default:
-
-- hero case: cross-border near-watchlist payout
-- backup case: dormant-wallet takeover
-- optional second act: merchant abuse if the CTO or mentor says that is hotter
-
-## Repo Map
-
-Use each doc for one job. Do not make them all repeat the same pitch.
-
-- [README.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/README.md:1)
-  - short project entrypoint
-  - current call
-  - doc map
-- [tng-doc-by-shiwei.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/tng-doc-by-shiwei.md:1)
-  - hackathon handbook
-  - judging criteria
-  - logistics
-  - track notes
-- [AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md:1)
-  - architecture
-  - product strategy
-  - demo sequence
-  - test and risk plan
-- [wbrya-unknown-design-20260425-101346.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/wbrya-unknown-design-20260425-101346.md:1)
-  - current design brief
-  - approach options
-  - CTO questions
-- [TODOS.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/TODOS.md:1)
-  - post-MVP backlog only
-- [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1033)
-  - current prototype
-  - seeded cases
-  - replay scenarios
+1. End-to-end hero case that ends in a visible pre-payout action.
+   Build: seeded alert -> evidence -> recommendation -> human `hold`, `step-up`, or `escalate` -> export note.
+   Why: if the case never reaches a decision, the product story fails.
+2. One-screen investigation workspace.
+   Build: facts, AI inferences, evidence timeline, linked entities, triggered controls, missing info, analyst notes, action rail.
+   Why: this is the core fraud-ops pain.
+3. Evidence-backed recommendation with human approval.
+   Build: specialist agents, policy citations, confidence, rationale, and grounded note drafting.
+   Why: this is the cleanest AI story and the most believable one.
+4. Purposeful multi-cloud split.
+   Build: app and seeded data on one cloud, AI or replay on the second cloud, with one sentence judges can remember.
+   Why: it is a hard judging requirement.
+5. Replay lab for one policy tradeoff.
+   Build: current threshold, stricter threshold, caught bad payments, delayed good payments.
+   Why: it is the sharpest differentiator and something real fraud ops teams want.
+6. Queue ranking and one backup case.
+   Build: reason chips, risk level, next action, second scenario for Q&A.
+   Why: good realism, but not before the hero case works.
+7. Thin customer step-up moment only if the first six are solid.
+   Why: it helps the "before money leaves" story, but it is easy to overscope.
 
 ## Immediate Decisions
 
 1. Keep `Security & Fraud` unless the CTO gives a very strong reason to switch.
-2. Ask whether TNG wants the hero case to be cross-border payout, dormant-wallet takeover, merchant abuse, or mule-ring collection.
-3. Lock the cloud split in one sentence and repeat it in the deck.
-4. Decide whether to keep the demo internal-only or add one thin customer step-up moment after `hold` / `ask for more proof`.
+2. Ask whether the hero case should stay `cross-border near-watchlist payout` or move to `dormant-wallet takeover`, `merchant QR abuse`, or `mule-ring collection`.
+3. Lock the multi-cloud split in one sentence and repeat that exact sentence in the deck and demo.
+4. Decide whether to stay internal-only or show one thin customer step-up moment after `hold` or `ask for more proof`.
 
-## CTO Questions
+## Read Order
 
-The full list lives in the design doc. The first three to ask are:
+Read the repo in this order. Each file has one job.
 
-1. Where is the real pain today: alert triage, evidence gathering, action approval, SAR drafting, or policy tuning?
-2. Which abuse pattern should we make the hero case if we want it to feel closest to TNG reality?
-3. What would make the multi-cloud split feel purposeful instead of cosmetic to you?
+1. [README.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/README.md:1)
+   Use for: current call, build order, doc map.
+2. [AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/AUTOPLAN_NEXTGEN_RISK_OPS_PLAN.md:1)
+   Use for: MVP scope, architecture, design contract, risk plan, demo plan, CTO questions, post-MVP backlog.
+3. [FRAUD_OPS_MARKET_RESEARCH_2026-04-25.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/FRAUD_OPS_MARKET_RESEARCH_2026-04-25.md:1)
+   Use for: vendor map, feature taxonomy, what real fraud ops teams want.
+4. [tng-doc-by-shiwei.md](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/tng-doc-by-shiwei.md:1)
+   Use for: event rules, judging, schedule, logistics, submission checklist.
 
 ## Repo Hygiene
 
 - Keep all data synthetic.
 - Do not publish the current `.env` contents as-is.
-- If this goes public, scrub secrets first and treat the repo as judge-facing.
+- If this repo goes public, scrub secrets first and treat it as judge-facing.
 
-## Inputs Worth Reusing
+## Reusable Inputs
 
 - [Fraud notes 1](https://www.bryanslab.com/blogs/fraud-2/)
 - [Fraud notes 2](https://www.bryanslab.com/blogs/fraud-ml/)
+
+## Seed Data References
+
+- [IBM AMLSim example dataset](https://www.kaggle.com/datasets/anshankul/ibm-amlsim-example-dataset/data?select=alerts.csv)
+- [Fraudulent transactions dataset](https://www.kaggle.com/datasets/chitwanmanchanda/fraudulent-transactions-data)
