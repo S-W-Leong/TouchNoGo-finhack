@@ -34,14 +34,19 @@ The v1 focus is:
 - one hero case: `account takeover`
 - one backup case: `unauthorized transaction after takeover`
 - three pages only
+- three routes only: `/queue`, `/cases/:caseId`, `/controls`
 - deterministic score and policy logic
 - AI for explanation and recommendation
 - human action and override
-- replay for one threshold or action-band change
+- replay for one threshold, action-band, or draft-rule change
 
 ## App Shape
 
 ### Page 1 - Queue / ATO Command Center
+
+Route:
+
+- `/queue`
 
 Purpose:
 
@@ -58,6 +63,10 @@ Shows:
 - current control state
 
 ### Page 2 - Case Investigation Workspace
+
+Route:
+
+- `/cases/:caseId`
 
 Purpose:
 
@@ -78,16 +87,21 @@ Shows:
 - action buttons
 - export note or ticket handoff
 
-### Page 3 - Scenario Lab / Replay
+### Page 3 - Controls Lab / Replay
+
+Route:
+
+- `/controls`
 
 Purpose:
 
-- test one threshold or action-band change before rollout
+- let analysts review editable variables, draft one readable control, and replay it safely before rollout
 
 Shows:
 
+- variable registry
 - current threshold or action band
-- edited threshold or action band
+- readable draft rule
 - before / after replay results
 - more bad cases caught
 - more good users delayed
@@ -96,56 +110,54 @@ Shows:
 ## Fraud Analyst Flow
 
 ```text
-[Queue / ATO Command Center]
+[/queue]
   ->
 [Open top risky account]
   ->
-[Case Investigation Workspace: review timeline, score, evidence]
+[/cases/CASE-ATO-001: review timeline, score, evidence]
   ->
-[AI recommendation + policy citations]
+[/cases/CASE-ATO-001: AI recommendation + policy citations]
   ->
-[Human approves or overrides action]
+[/cases/CASE-ATO-001: human approves or overrides action]
   ->
-[Export note / ticket handoff]
+[/cases/CASE-ATO-001: export note / ticket handoff]
   ->
-[Scenario Lab / Replay]
+[/controls: review variables, draft rule, replay]
   ->
-[Change one threshold]
-  ->
-[Replay and compare tradeoff]
+[/controls: compare tradeoff and keep draft]
 ```
 
 ## Page And State Flow
 
 ```text
-[Queue / ATO Command Center]
+[/queue]
   State: default
   ->
-[Queue / ATO Command Center]
+[/queue]
   State: filtered by spike
   ->
-[Case Investigation Workspace]
+[/cases/CASE-ATO-001]
   State: initial review
   ->
-[Case Investigation Workspace]
+[/cases/CASE-ATO-001]
   State: evidence expanded
   ->
-[Case Investigation Workspace]
+[/cases/CASE-ATO-001]
   State: recommendation review
   ->
-[Case Investigation Workspace]
+[/cases/CASE-ATO-001]
   State: action confirmed
   ->
-[Case Investigation Workspace]
+[/cases/CASE-ATO-001]
   State: note exported
   ->
-[Scenario Lab / Replay]
-  State: baseline
+[/controls]
+  State: variable registry
   ->
-[Scenario Lab / Replay]
-  State: edited
+[/controls]
+  State: draft edited
   ->
-[Scenario Lab / Replay]
+[/controls]
   State: comparison view
 ```
 
@@ -157,6 +169,8 @@ Shows:
 +----------------------------------------------------------------------------------+
 | ATO SPIKE: suspicious account behavior up 4.2x in last 30 min                   |
 | 18 new-device logins | 9 PIN resets | 6 high-value transfer attempts            |
++----------------------------------------------------------------------------------+
+| Route: /queue                                                                    |
 +----------------------------------------------------------------------------------+
 | Search [__________]      Filter: ATO       Queue: PREVENTION                     |
 +----------------------------------------------------------------------------------+
@@ -174,8 +188,9 @@ Shows:
 
 ```text
 +------------------------------------------------------------------------------------------------------+
-| User: A*** H****     Score: 92 CRITICAL     Current Control: NONE     Recommended: FREEZE_ACCOUNT   |
-| Reason: 2am login | new device | PIN reset | high-value transfer attempt                            |
+| User: A*** H****     Score: 92 CRITICAL     Current Control: NONE     Recommended: FREEZE_ACCOUNT    |
+| Route: /cases/CASE-ATO-001                                                                           |
+| Reason: 2am login | new device | PIN reset | high-value transfer attempt                             |
 +--------------------------+------------------------------------------------+--------------------------+
 | Left Rail                | Center                                         | Right Rail               |
 | - case list              | USER TIMELINE                                  | RECOMMENDED ACTION       |
@@ -202,29 +217,35 @@ Shows:
 +--------------------------+------------------------------------------------+--------------------------+
 ```
 
-### Scenario Lab / Replay
+### Controls Lab / Replay
 
 ```text
-+-------------------------------------------------------------------------------------------+
-| Scenario Lab: ATO control replay                                                          |
-+-------------------------------------------------------------------------------------------+
-| Current action band:                                                                      |
-| score < 70 -> ALLOW   | 71-80 -> STEP_UP_VERIFY   | >80 -> FREEZE_ACCOUNT                 |
-+-------------------------------------------------------------------------------------------+
-| Edited action band:                                                                       |
-| score < 65 -> ALLOW   | 66-78 -> STEP_UP_VERIFY   | >78 -> FREEZE_ACCOUNT                 |
-+-------------------------------------------------------------------------------------------+
-| Replay Results                                                                            |
-| Cases evaluated: 10                                                                       |
-| Before: 5 bad cases caught | 1 good user delayed | 7 analyst reviews                      |
-| After : 6 bad cases caught | 2 good users delayed| 9 analyst reviews                      |
-| Delta : +1 caught bad case  | +1 extra good-user delay | +2 analyst reviews               |
-+-------------------------------------------------------------------------------------------+
-| Analyst readout: tighter freeze threshold catches one more likely ATO,                    |
-| but adds one extra customer friction event.                                               |
-+-------------------------------------------------------------------------------------------+
-| [Reset]   [Replay]   [Keep As Draft]                                                      |
-+-------------------------------------------------------------------------------------------+
++------------------------------------------------------------------------------------------------------+
+| Controls Lab: ATO policy replay                                                                    |
+| Route: /controls                                                                                   |
++------------------------------------------------------------------------------------------------------+
+| Variable Registry                                                                                 |
+| :is_new_device [boolean]   :pin_reset_24h [boolean]   :failed_login_count_1h [number]             |
+| :amount_ratio_30d [ratio]  :linked_prior_case_count [number]                                      |
++------------------------------------------------------------------------------------------------------+
+| Current action band                                                                               |
+| score < 70 -> ALLOW   | 71-80 -> STEP_UP_VERIFY   | >80 -> FREEZE_ACCOUNT                         |
++------------------------------------------------------------------------------------------------------+
+| Draft rule                                                                                        |
+| FREEZE_ACCOUNT if :is_new_device = true and :pin_reset_24h = true                                 |
+|                   and :amount_ratio_30d >= 5 and :linked_prior_case_count >= 1                    |
++------------------------------------------------------------------------------------------------------+
+| Replay Results                                                                                    |
+| Cases evaluated: 10                                                                               |
+| Before: 5 bad cases caught | 1 good user delayed | 7 analyst reviews                              |
+| After : 6 bad cases caught | 2 good users delayed| 9 analyst reviews                              |
+| Delta : +1 caught bad case | +1 extra good-user delay | +2 analyst reviews                        |
++------------------------------------------------------------------------------------------------------+
+| Analyst readout: stronger ATO freeze rule catches one more likely takeover,                       |
+| but adds one extra customer friction event.                                                       |
++------------------------------------------------------------------------------------------------------+
+| [Edit Variables]   [Replay]   [Keep As Draft]                                                     |
++------------------------------------------------------------------------------------------------------+
 ```
 
 ## Why This Changed
@@ -391,16 +412,17 @@ Key interactions:
 - override recommendation with mandatory human reason
 - export case note or ticket handoff
 
-### 3. Scenario Lab / Replay
+### 3. Controls Lab / Replay
 
 Purpose:
 
-- prove that behavior thresholds or action bands can be tested safely before rollout
+- prove that behavior thresholds or readable draft controls can be tested safely before rollout
 
 Must show:
 
 - current action band or threshold
-- proposed action band or threshold
+- variable registry
+- readable draft rule
 - fixed seeded scenarios
 - bad cases caught
 - good users delayed
@@ -409,9 +431,11 @@ Must show:
 
 Key interactions:
 
-- change one threshold or one action band
+- edit one threshold, action band, or whitelisted variable
+- draft one readable control
 - rerun the replay
 - compare before vs after
+- keep the result as draft
 
 Optional only if the core demo is already stable:
 
@@ -421,6 +445,7 @@ What not to do:
 
 - no full visual drag-and-drop rule builder
 - no fake no-code DSL unless it directly drives replay
+- no arbitrary user code execution
 - no autonomous rule deployment
 
 ## Core Product Flow
@@ -435,7 +460,7 @@ What not to do:
 6. Policy and audit layer maps that action to explicit control and review requirements.
 7. Analyst chooses `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, or `ESCALATE`.
 8. System drafts and exports the case note or ticket handoff.
-9. Analyst opens Scenario Lab and tightens one threshold or action band.
+9. Analyst opens Controls Lab and tightens one threshold, action band, or draft rule.
 10. Replay shows the tradeoff.
 
 ### Backup flow
@@ -458,7 +483,7 @@ Do not build more than one backup case.
 - human action and override reason
 - masked PII
 - case note or ticket export
-- simple threshold replay
+- simple Controls Lab replay
 
 ### V1.5 only if v1 is stable
 
@@ -552,6 +577,45 @@ Deterministic:
 
 - yes
 
+### Thin analyst-defined variables and readable rules
+
+Borrow the useful part of a Radar-style workflow, not the whole product.
+
+For v1, analysts can define or edit only:
+
+- boolean flags
+- numeric counts
+- ratios vs baseline
+- hours since event
+- linked-case counts
+
+Each variable must declare:
+
+- name
+- type
+- source fields
+- lookback window
+- transform
+- description
+
+Readable rule format example:
+
+```text
+FREEZE_ACCOUNT if
+  :is_new_device = true and
+  :pin_reset_24h = true and
+  :amount_ratio_30d >= 5 and
+  :linked_prior_case_count >= 1
+```
+
+Guardrails:
+
+- draft only
+- replay against the fixed seed set before save
+- AI may suggest the rule from 10 reviewed anomalies
+- no live deployment in v1
+- no arbitrary user code
+
 ### 5. Behavior Score Engine
 
 Responsibility:
@@ -567,6 +631,69 @@ Important rule:
 Deterministic:
 
 - yes
+
+### How v1 score is calculated
+
+For the hackathon, the fraud score is a deterministic behavior score, not a trained-model claim.
+
+Suggested ATO feature weights:
+
+- `new_device_age_hours <= 24`: `+20`
+- `login_between_00_and_05`: `+10`
+- `pin_reset_within_24h`: `+15`
+- `beneficiary_added_within_24h`: `+10`
+- `failed_login_count_1h >= 3`: `+10`
+- `amount_to_30d_avg_ratio >= 3`: `+10`
+- `amount_to_30d_avg_ratio >= 6`: `+18` instead of `+10`
+- `linked_prior_case_count >= 1`: `+15`
+- `prior_step_up_failed = true`: `+10`
+
+Example formula:
+
+```text
+score = clamp(
+  new_device_points
+  + late_night_points
+  + pin_reset_points
+  + beneficiary_change_points
+  + failed_login_points
+  + amount_ratio_points
+  + linked_case_points
+  + prior_step_up_points,
+  0,
+  100
+)
+```
+
+What we can honestly say:
+
+- yes, we have enough information to calculate a prototype score because every component comes from observable seeded events or deterministic transforms
+- no, we do not have enough information to claim a production-trained fraud model
+- a real production score would need historical labeled outcomes, segment baselines, calibration, drift monitoring, and false-positive cost tuning
+
+UI requirement:
+
+- show the score breakdown beside the total score
+- every score driver must map to evidence IDs the analyst can inspect
+
+### How the spike banner is calculated
+
+The spike is not the fraud score.
+It is a queue-level anomaly indicator used for routing.
+
+Prototype rule:
+
+- window: last `30 minutes`
+- compare against trailing `7-day` same-hour baseline for the same signal cluster
+- signal cluster example: `new-device logins + PIN resets + high-amount transfer attempts`
+- show the banner when the cluster is `>= 3x` baseline and at least `2` sub-signals are above threshold
+
+What we can honestly say:
+
+- yes, this is enough to create a deterministic demo spike
+- no, this is not a production anomaly model
+- a production spike engine would segment by campaign, region, day of week, and feature cohort
+- the spike helps prioritize the queue; it does not decide the final case action
 
 ### 6. AI Investigation Copilot
 
@@ -826,6 +953,9 @@ Suggested tables:
 - `alerts`
 - `evidence_items`
 - `score_components`
+- `score_bands`
+- `variable_definitions`
+- `rule_drafts`
 - `agent_runs`
 - `recommendations`
 - `policies`
@@ -838,10 +968,24 @@ Suggested tables:
 - `EvidenceKind`: `FACT`, `INFERENCE`, `POLICY`, `CONTROL_STATE`
 - `CaseStatus`: `NEW_ALERT`, `INVESTIGATING`, `READY_FOR_REVIEW`, `NEEDS_MORE_DATA`, `CLOSED`
 - `RecommendationAction`: `ALLOW`, `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, `ESCALATE`
+- `VariableType`: `BOOLEAN`, `NUMBER`, `RATIO`, `COUNT`, `DURATION_HOURS`
+- `RuleState`: `DRAFT`, `READY_FOR_REPLAY`, `READY_FOR_SHADOW`, `REJECTED`
+
+## Route Map
+
+Keep routing simple:
+
+- `/queue`
+- `/cases/:caseId`
+- `/controls`
 
 ## Page-Level Flow Contract
 
 ### Queue / ATO Command Center
+
+Route:
+
+- `/queue`
 
 On load:
 
@@ -855,6 +999,10 @@ On click:
 - preserve ranking context
 
 ### Case Investigation Workspace
+
+Route:
+
+- `/cases/:caseId`
 
 On load:
 
@@ -879,19 +1027,27 @@ On export:
 - keep downloadable or copyable output
 - show believable handoff to support or case tooling
 
-### Scenario Lab
+### Controls Lab / Replay
+
+Route:
+
+- `/controls`
 
 On load:
 
 - show current threshold or action band
+- show variable registry
+- show readable draft rule
 - show seeded replay baseline
 
-On threshold change:
+On edit:
 
 - rerun replay against same seed
 - show delta summary
 - show analyst workload delta
 - write replay run to audit
+- keep the proposal as draft
+- do not live-deploy from this screen
 
 ## Compliance And Integration Posture
 
@@ -1004,7 +1160,7 @@ Build in this order and stop when the previous slice is weak.
 4. Deterministic score and action ladder
 5. Human override, masked PII, and audit log
 6. Note export or ticket handoff
-7. Scenario Lab replay
+7. Controls Lab replay
 8. Backup unauthorized-transaction case
 9. AI draft-rule suggestion only if everything above is stable
 
@@ -1031,8 +1187,8 @@ Build in this order and stop when the previous slice is weak.
 5. Show AI explanation and recommended `FREEZE_ACCOUNT` or `STEP_UP_VERIFICATION`.
 6. Approve or override as analyst.
 7. Export the case note or ticket handoff.
-8. Open Scenario Lab.
-9. Tighten one threshold or action band.
+8. Open Controls Lab.
+9. Tighten one threshold, action band, or readable draft rule.
 10. Replay and show the tradeoff.
 
 ## If Time Remains
@@ -1041,7 +1197,7 @@ Only after the core demo is stable:
 
 - add one backup case family
 - add one thin integration card for ticketing
-- add one AI-generated draft rule suggestion in Scenario Lab
+- add one AI-generated draft rule suggestion in Controls Lab
 
 ## Final Call
 
