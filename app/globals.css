@@ -1,0 +1,225 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #e9eef5;
+  --surface: rgba(255, 255, 255, 0.92);
+  --surface-strong: #ffffff;
+  --surface-dark: #10202d;
+  --line: rgba(16, 32, 45, 0.12);
+  --text: #0f1720;
+  --muted: #4f5d6b;
+  --accent: #0f766e;
+  --accent-soft: rgba(15, 118, 110, 0.09);
+  --danger: #9f1239;
+  --warning: #b45309;
+  --success: #166534;
+  --shadow: 0 8px 24px rgba(16, 32, 45, 0.06);
+  --radius-xl: 18px;
+  --radius-lg: 14px;
+  --radius-md: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background:
+    radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 24%),
+    radial-gradient(circle at top right, rgba(14, 116, 144, 0.08), transparent 22%),
+    var(--bg);
+  color: var(--text);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  font-family: var(--font-manrope), sans-serif;
+  color: var(--text);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(13, 148, 136, 0.22);
+}
+
+.app-shell {
+  width: min(1440px, calc(100vw - 18px));
+  margin: 8px auto;
+  padding: 6px;
+}
+
+.panel {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.panel-strong {
+  background: var(--surface-strong);
+}
+
+.eyebrow {
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.metric-value {
+  font-size: clamp(1.2rem, 0.95rem + 1vw, 1.75rem);
+  line-height: 1;
+  font-weight: 700;
+}
+
+.mono {
+  font-family: var(--font-plex-mono), monospace;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  padding: 0.25rem 0.55rem;
+  font-size: 0.73rem;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.button-primary,
+.button-secondary,
+.button-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 999px;
+  padding: 0.52rem 0.9rem;
+  font-weight: 650;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.button-primary {
+  background: var(--surface-dark);
+  color: white;
+}
+
+.button-secondary {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--line);
+}
+
+.button-danger {
+  background: rgba(159, 18, 57, 0.1);
+  color: var(--danger);
+  border-color: rgba(159, 18, 57, 0.16);
+}
+
+.button-primary:hover,
+.button-secondary:hover,
+.button-danger:hover {
+  transform: translateY(-1px);
+}
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 12, 18, 0.38);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+}
+
+.sheet-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(520px, 100vw);
+  padding: 0.75rem;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheet-card {
+  height: 100%;
+  overflow: auto;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+
+.dense-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.dense-table th {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+.dense-table td {
+  padding: 0.7rem;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(16, 32, 45, 0.08);
+}
+
+.dense-list-row {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.72rem 0.8rem;
+  border-bottom: 1px solid rgba(16, 32, 45, 0.08);
+}
+
+.dense-list-row:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 820px) {
+  .app-shell {
+    width: min(100vw - 8px, 100%);
+    margin: 4px auto 8px;
+    padding: 4px;
+  }
+
+  .sheet-panel {
+    right: 0;
+    left: 0;
+    top: auto;
+    width: 100vw;
+    bottom: 0;
+    padding: 0.35rem;
+    max-height: min(82vh, 720px);
+  }
+
+  .sheet-card {
+    border-radius: 18px 18px 0 0;
+  }
+}
