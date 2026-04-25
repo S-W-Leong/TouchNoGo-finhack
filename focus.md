@@ -23,6 +23,210 @@ The secondary consequence path is:
 The spike is the trigger, not the product.
 User behavior is the core signal layer.
 
+## Focus Lock
+
+This file should stay short and operational.
+
+If something is not directly helping the team decide what to build for the hackathon, cut it.
+
+The v1 focus is:
+
+- one hero case: `account takeover`
+- one backup case: `unauthorized transaction after takeover`
+- three pages only
+- deterministic score and policy logic
+- AI for explanation and recommendation
+- human action and override
+- replay for one threshold or action-band change
+
+## App Shape
+
+### Page 1 - Queue / ATO Command Center
+
+Purpose:
+
+- show the spike
+- rank suspicious accounts
+- route analyst into the hero case
+
+Shows:
+
+- spike banner
+- ranked cases
+- behavior score
+- reason chips
+- current control state
+
+### Page 2 - Case Investigation Workspace
+
+Purpose:
+
+- help the analyst understand what happened
+- help the analyst decide what action to take
+
+Shows:
+
+- masked user summary
+- behavior score + feature drivers
+- user timeline
+- account changes
+- device changes
+- linked accounts
+- suspicious actions attempted vs succeeded
+- AI recommendation
+- policy citations
+- action buttons
+- export note or ticket handoff
+
+### Page 3 - Scenario Lab / Replay
+
+Purpose:
+
+- test one threshold or action-band change before rollout
+
+Shows:
+
+- current threshold or action band
+- edited threshold or action band
+- before / after replay results
+- more bad cases caught
+- more good users delayed
+- analyst workload delta
+
+## Fraud Analyst Flow
+
+```text
+[Queue / ATO Command Center]
+  ->
+[Open top risky account]
+  ->
+[Case Investigation Workspace: review timeline, score, evidence]
+  ->
+[AI recommendation + policy citations]
+  ->
+[Human approves or overrides action]
+  ->
+[Export note / ticket handoff]
+  ->
+[Scenario Lab / Replay]
+  ->
+[Change one threshold]
+  ->
+[Replay and compare tradeoff]
+```
+
+## Page And State Flow
+
+```text
+[Queue / ATO Command Center]
+  State: default
+  ->
+[Queue / ATO Command Center]
+  State: filtered by spike
+  ->
+[Case Investigation Workspace]
+  State: initial review
+  ->
+[Case Investigation Workspace]
+  State: evidence expanded
+  ->
+[Case Investigation Workspace]
+  State: recommendation review
+  ->
+[Case Investigation Workspace]
+  State: action confirmed
+  ->
+[Case Investigation Workspace]
+  State: note exported
+  ->
+[Scenario Lab / Replay]
+  State: baseline
+  ->
+[Scenario Lab / Replay]
+  State: edited
+  ->
+[Scenario Lab / Replay]
+  State: comparison view
+```
+
+## Fake Page Sketches
+
+### Queue / ATO Command Center
+
+```text
++----------------------------------------------------------------------------------+
+| ATO SPIKE: suspicious account behavior up 4.2x in last 30 min                   |
+| 18 new-device logins | 9 PIN resets | 6 high-value transfer attempts            |
++----------------------------------------------------------------------------------+
+| Search [__________]      Filter: ATO       Queue: PREVENTION                     |
++----------------------------------------------------------------------------------+
+| Rank | User        | Score | Reason Chips                    | Control State     |
+| 1    | U*** H****  | 92    | 2am login, new device, PIN reset| No freeze         |
+| 2    | N*** R****  | 87    | linked acct, new payee, top-up  | Review pending    |
+| 3    | S*** A****  | 76    | password reset, high amount      | None              |
+| 4    | M*** Z****  | 71    | new device, repeat failure       | None              |
++----------------------------------------------------------------------------------+
+| Click top case -> open investigation                                             |
++----------------------------------------------------------------------------------+
+```
+
+### Case Investigation Workspace
+
+```text
++------------------------------------------------------------------------------------------------------+
+| User: A*** H****     Score: 92 CRITICAL     Current Control: NONE     Recommended: FREEZE_ACCOUNT   |
+| Reason: 2am login | new device | PIN reset | high-value transfer attempt                            |
++--------------------------+------------------------------------------------+--------------------------+
+| Left Rail                | Center                                         | Right Rail               |
+| - case list              | USER TIMELINE                                  | RECOMMENDED ACTION       |
+| - rank                   | 01:58 login from new device                    | FREEZE_ACCOUNT           |
+| - score                  | 02:01 PIN reset                               | Confidence: 0.84         |
+| - reason chips           | 02:04 beneficiary added                       |                          |
+|                          | 02:06 MYR 8,500 transfer attempted            | WHY                      |
+|                          | 02:07 second transfer blocked                 | - new device             |
+|                          |                                                | - late-night login       |
+|                          | FACTS                                          | - PIN reset before tx    |
+|                          | - device age: 2 hours                         | - 8.7x above baseline    |
+|                          | - amount: 8.7x baseline                       |                          |
+|                          | - linked device in prior reviewed case        | POLICY / CONTROL         |
+|                          |                                                | POL-ATO-03               |
+|                          | AI INFERENCES                                  | POL-OPS-04               |
+|                          | - likely ATO pattern                          |                          |
+|                          | - unauthorized transfer risk high             | ACTIONS                  |
+|                          |                                                | [ALLOW]                  |
+|                          | MISSING DATA                                   | [STEP_UP_VERIFY]         |
+|                          | - customer contact confirmation not yet done  | [FREEZE_ACCOUNT]         |
+|                          |                                                | [ESCALATE]               |
+|                          | LINKED ACCOUNTS / DEVICES                      |                          |
+|                          | - linked device to prior case                 | [Export Note]            |
++--------------------------+------------------------------------------------+--------------------------+
+```
+
+### Scenario Lab / Replay
+
+```text
++-------------------------------------------------------------------------------------------+
+| Scenario Lab: ATO control replay                                                          |
++-------------------------------------------------------------------------------------------+
+| Current action band:                                                                      |
+| score < 70 -> ALLOW   | 71-80 -> STEP_UP_VERIFY   | >80 -> FREEZE_ACCOUNT                 |
++-------------------------------------------------------------------------------------------+
+| Edited action band:                                                                       |
+| score < 65 -> ALLOW   | 66-78 -> STEP_UP_VERIFY   | >78 -> FREEZE_ACCOUNT                 |
++-------------------------------------------------------------------------------------------+
+| Replay Results                                                                            |
+| Cases evaluated: 10                                                                       |
+| Before: 5 bad cases caught | 1 good user delayed | 7 analyst reviews                      |
+| After : 6 bad cases caught | 2 good users delayed| 9 analyst reviews                      |
+| Delta : +1 caught bad case  | +1 extra good-user delay | +2 analyst reviews               |
++-------------------------------------------------------------------------------------------+
+| Analyst readout: tighter freeze threshold catches one more likely ATO,                    |
+| but adds one extra customer friction event.                                               |
++-------------------------------------------------------------------------------------------+
+| [Reset]   [Replay]   [Keep As Draft]                                                      |
++-------------------------------------------------------------------------------------------+
+```
+
 ## Why This Changed
 
 The strongest new signal came from [docs/feedback-zenny.md](./docs/feedback-zenny.md).
