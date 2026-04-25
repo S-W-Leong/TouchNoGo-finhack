@@ -4,7 +4,6 @@
 
 - Track: `Security & Fraud`
 - Product: `AI-native pre-payout decision workspace for fraud + AML ops`
-- Hero case: `case-301`, the `cross-border near-watchlist payout` case in [index.html](/C:/Users/wbrya/OneDrive/Documents/GitHub/tng-hackathon-2026-personal/index.html:1352)
 - Hero replay: `watchlist-payout`, the watchlist threshold tradeoff replay
 - Wedge: `evidence graph + specialist agents + human action rail + replay lab`
 
