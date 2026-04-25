@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import { POST as resetDemoRoute } from "@/app/api/demo/reset/route";
 import { POST as sweepExpiredPrompts } from "@/app/api/internal/sweep-expired-prompts/route";
 import { applyCaseAction } from "@/lib/services/action-orchestrator";
 import { resetEnvCacheForTests } from "@/lib/config/env";
@@ -181,5 +182,26 @@ describe("seeded demo flow", () => {
     expect(requestBody.get("StatusCallback")).toBe(
       "https://whatsapp-agent-5pjot.ondigitalocean.app/api/webhooks/twilio/status",
     );
+  });
+
+  test("reset demo route restores the seeded baseline after runtime mutations", async () => {
+    await applyCaseAction({
+      caseId: "CASE-ATO-008",
+      action: "STEP_UP_VERIFICATION",
+      actorName: "Fraud analyst",
+      actorType: "ANALYST",
+    });
+    resolveCaseFromReply("CASE-ATO-008", "SIM-IN-RESET");
+
+    let record = await getCaseDetail("CASE-ATO-008");
+    expect(record?.resolutionState).toBe("REACTIVATED");
+
+    const response = await resetDemoRoute();
+    expect(response.status).toBe(200);
+
+    record = await getCaseDetail("CASE-ATO-008");
+    expect(record?.resolutionState).toBe("PENDING_USER");
+    expect(record?.prompt.state).toBe("SIMULATED");
+    expect(record?.prompt.messageSid).toBe("SIM-MSG-008");
   });
 });

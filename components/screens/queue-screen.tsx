@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   ArrowUpRight,
   KeyRound,
+  RotateCcw,
   Search,
   ShieldAlert,
   Smartphone,
@@ -44,8 +46,10 @@ function signalIcon(signal: string) {
 }
 
 export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<(typeof filterModes)[number]>("ALL");
+  const [isResetting, setIsResetting] = useState(false);
 
   const rows = useMemo(() => {
     return snapshot.rows.filter((row) => {
@@ -64,6 +68,33 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
       return matchesQuery && matchesFilter;
     });
   }, [filter, query, snapshot.rows]);
+
+  const handleResetDemoState = async () => {
+    const confirmed = window.confirm(
+      "Reset the demo queue back to the seeded baseline? This clears stale prompt and reply state.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsResetting(true);
+
+    try {
+      const response = await fetch("/api/demo/reset", { method: "POST" });
+      const payload = (await response.json().catch(() => null)) as { message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(payload?.message ?? "Demo reset failed.");
+      }
+
+      router.refresh();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Demo reset failed.");
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_320px]">
@@ -266,6 +297,18 @@ export function QueueScreen({ snapshot }: { snapshot: QueueSnapshot }) {
                 <span className="mono text-sm font-semibold">{value}</span>
               </div>
             ))}
+            <button
+              type="button"
+              className="button-secondary justify-between"
+              onClick={handleResetDemoState}
+              disabled={isResetting}
+            >
+              <span>{isResetting ? "Resetting demo state..." : "Reset demo state"}</span>
+              <RotateCcw size={14} absoluteStrokeWidth />
+            </button>
+            <div className="text-xs text-[var(--muted)]">
+              Restores the seeded queue and clears stale Twilio/demo runtime state.
+            </div>
           </div>
         </SectionCard>
 
