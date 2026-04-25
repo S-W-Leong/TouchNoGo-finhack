@@ -129,6 +129,7 @@ export const promptSchema = z.object({
   channel: z.literal("WHATSAPP"),
   templateName: z.string(),
   messagePreview: z.string(),
+  messageSid: z.string().optional(),
   sentAt: z.string().optional(),
   deliveredAt: z.string().optional(),
   expiredAt: z.string().optional(),
