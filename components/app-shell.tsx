@@ -28,7 +28,7 @@ export function AppShell({
         <div className="flex flex-col gap-4 px-4 py-3 md:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-slate-800/10 bg-[var(--surface-contrast)] text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--tng-blue)] text-white">
                 <Shield size={18} absoluteStrokeWidth />
               </div>
 
@@ -60,10 +60,10 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "inline-flex items-center gap-2 rounded-[8px] border px-3 py-2 text-sm font-semibold transition-colors",
+                      "inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors",
                       isActive
-                        ? "border-slate-900 bg-slate-900 text-white"
-                        : "border-[var(--line)] bg-[var(--surface-subtle)] text-[var(--muted-strong)]",
+                        ? "border-[var(--tng-orange)] text-[var(--text)]"
+                        : "border-transparent text-[var(--muted)] hover:text-[var(--muted-strong)]",
                     )}
                   >
                     <Icon size={15} absoluteStrokeWidth />
