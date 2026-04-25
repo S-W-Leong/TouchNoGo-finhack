@@ -20,6 +20,7 @@ export const promptStateSchema = z.enum([
   "SENT",
   "DELIVERED",
   "FAILED",
+  "SIMULATED",
   "USER_REPLIED_TNG_LOGIN",
   "EXPIRED",
 ]);
@@ -77,6 +78,20 @@ export const linkedEntitySchema = z.object({
   label: z.string(),
   relationship: z.string(),
   riskNote: z.string(),
+});
+
+export const networkObservationSchema = z.object({
+  observationId: z.string(),
+  ipAddress: z.string(),
+  label: z.string(),
+  geoLabel: z.string(),
+  asnLabel: z.string(),
+  reputation: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]),
+  disposition: z.enum(["WATCH", "BLOCKED", "ALLOWLISTED"]),
+  firstSeenAt: z.string(),
+  lastSeenAt: z.string(),
+  linkedCaseIds: z.array(z.string()),
+  note: z.string(),
 });
 
 export const suspiciousActionSchema = z.object({
@@ -184,6 +199,7 @@ export const caseRecordSchema = z.object({
   missingData: z.array(z.string()),
   accountChanges: z.array(z.string()),
   deviceChanges: z.array(z.string()),
+  networkObservations: z.array(networkObservationSchema),
   linkedEntities: z.array(linkedEntitySchema),
   suspiciousActions: z.array(suspiciousActionSchema),
   timeline: z.array(timelineEventSchema),
@@ -281,3 +297,4 @@ export type CaseRecord = z.infer<typeof caseRecordSchema>;
 export type ControlsWorkspace = z.infer<typeof controlsWorkspaceSchema>;
 export type RuleDefinition = z.infer<typeof ruleDefinitionSchema>;
 export type RuleCondition = z.infer<typeof ruleConditionSchema>;
+export type NetworkObservation = z.infer<typeof networkObservationSchema>;

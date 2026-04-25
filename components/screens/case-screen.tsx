@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCheck,
@@ -16,17 +16,31 @@ import {
 } from "lucide-react";
 
 import { SectionCard } from "@/components/ui/section-card";
+import { MarkdownContent } from "@/components/ui/markdown-content";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { CaseRecord } from "@/lib/domain/schema";
 
 type SheetKind = "score" | "evidence" | "policy" | "note" | null;
+type PendingAction =
+  | "apply"
+  | "override"
+  | "export"
+  | "generate-explanation"
+  | "draft-note"
+  | "send-live-prompt"
+  | "simulate-reply"
+  | null;
 
 function formatLabel(value: string) {
   return value
     .replaceAll("_", " ")
     .toLowerCase()
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatDisposition(value: string) {
+  return value.toLowerCase().replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
@@ -36,8 +50,12 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
   const [reportContent, setReportContent] = useState(initialRecord.exportNote);
   const [generatedExplanation, setGeneratedExplanation] = useState<string | null>(null);
   const [generatedNote, setGeneratedNote] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const confidence = Math.round(record.recommendation.confidence * 100);
+  const isSeededPrompt =
+    record.prompt.state === "SIMULATED" ||
+    record.prompt.messageSid?.startsWith("SIM-MSG") === true;
+  const latestAuditEvents = [...record.auditEvents].slice(-3).reverse();
 
   const mutateCase = async (url: string, payload?: unknown) => {
     const response = await fetch(url, {
@@ -53,8 +71,10 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
     return response.json();
   };
 
-  const handleApplyRecommended = () => {
-    startTransition(async () => {
+  const handleApplyRecommended = async () => {
+    setPendingAction("apply");
+
+    try {
       const nextRecord = await mutateCase(`/api/cases/${record.caseId}/action`, {
         action: record.recommendation.action,
         actor: "Fraud analyst",
@@ -62,17 +82,21 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
       setRecord(nextRecord);
       setReportContent(nextRecord.exportNote);
       router.refresh();
-    });
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const handleOverride = (option: CaseRecord["recommendation"]["humanOverrideOptions"][number]) => {
+  const handleOverride = async (option: CaseRecord["recommendation"]["humanOverrideOptions"][number]) => {
     const overrideReason = window.prompt(`Why override to ${formatLabel(option)}?`);
 
     if (!overrideReason) {
       return;
     }
 
-    startTransition(async () => {
+    setPendingAction("override");
+
+    try {
       const nextRecord = await mutateCase(`/api/cases/${record.caseId}/override`, {
         overrideAction: option,
         overrideReason,
@@ -81,38 +105,54 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
       setRecord(nextRecord);
       setReportContent(nextRecord.exportNote);
       router.refresh();
-    });
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const handleExportReport = () => {
-    startTransition(async () => {
+  const handleExportReport = async () => {
+    setPendingAction("export");
+
+    try {
       const result = await mutateCase(`/api/cases/${record.caseId}/report`, {
         format: "MARKDOWN",
       });
       setReportContent(result.content);
       setSheet("note");
-    });
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const handleGenerateExplanation = () => {
-    startTransition(async () => {
+  const handleGenerateExplanation = async () => {
+    setPendingAction("generate-explanation");
+
+    try {
       const result = await mutateCase(`/api/cases/${record.caseId}/generate-explanation`);
       setGeneratedExplanation(result.explanation);
       setSheet("evidence");
-    });
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const handleDraftNote = () => {
-    startTransition(async () => {
+  const handleDraftNote = async () => {
+    setPendingAction("draft-note");
+
+    try {
       const result = await mutateCase(`/api/cases/${record.caseId}/draft-note`);
       setGeneratedNote(result.note);
       setReportContent(result.note);
       setSheet("note");
-    });
+    } finally {
+      setPendingAction(null);
+    }
   };
 
-  const handleSimulateReply = () => {
-    startTransition(async () => {
+  const handleSimulateReply = async () => {
+    setPendingAction("simulate-reply");
+
+    try {
       const formData = new FormData();
       formData.set("MessageSid", `SIM-IN-${Date.now()}`);
       formData.set("Body", "/tng-login");
@@ -131,7 +171,44 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
       setRecord(nextRecord);
       setReportContent(nextRecord.exportNote);
       router.refresh();
-    });
+    } finally {
+      setPendingAction(null);
+    }
+  };
+
+  const handleSendLivePrompt = async () => {
+    setPendingAction("send-live-prompt");
+
+    try {
+      const response = await fetch(`/api/cases/${record.caseId}/prompt/live`, {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const message =
+          ((await response.json().catch(async () => ({ message: await response.text() }))) as {
+            message?: string;
+          }).message ?? "Live WhatsApp resend failed.";
+
+        const refreshed = await fetch(`/api/cases/${record.caseId}`, { cache: "no-store" });
+        if (refreshed.ok) {
+          const nextRecord = await refreshed.json();
+          setRecord(nextRecord);
+          setReportContent(nextRecord.exportNote);
+        }
+
+        throw new Error(message);
+      }
+
+      const nextRecord = await response.json();
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Live WhatsApp resend failed.");
+    } finally {
+      setPendingAction(null);
+    }
   };
 
   return (
@@ -147,6 +224,7 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                 className="button-secondary"
                 onClick={() => setSheet("score")}
                 type="button"
+                disabled={pendingAction !== null}
               >
                 <Scale size={14} absoluteStrokeWidth />
                 Score logic
@@ -155,6 +233,7 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                 className="button-secondary"
                 onClick={() => setSheet("evidence")}
                 type="button"
+                disabled={pendingAction !== null}
               >
                 <Files size={14} absoluteStrokeWidth />
                 Evidence pack
@@ -163,6 +242,7 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                 className="button-secondary"
                 onClick={() => setSheet("policy")}
                 type="button"
+                disabled={pendingAction !== null}
               >
                 <Lock size={14} absoluteStrokeWidth />
                 Policy basis
@@ -171,9 +251,12 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                 className="button-secondary"
                 onClick={handleGenerateExplanation}
                 type="button"
+                disabled={pendingAction !== null}
               >
                 <Files size={14} absoluteStrokeWidth />
-                Generate explanation
+                {pendingAction === "generate-explanation"
+                  ? "Generating analyst brief..."
+                  : "Generate analyst brief"}
               </button>
             </div>
           }
@@ -288,86 +371,141 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
           <SectionCard
             compact
             title="Why this case is high-risk"
-            subtitle="Facts stay separate from inference so the analyst can challenge the recommendation."
+            subtitle="Keep the proof tight. Facts first, interpretation second, network signals after that."
           >
             <div className="grid gap-2">
-              <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
-                <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">Facts</div>
-                <div className="mt-2 space-y-2 text-sm">
-                  {record.facts.map((fact) => (
-                    <div key={fact}>{fact}</div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
-                <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
-                  Inference
-                </div>
-                <div className="mt-2 space-y-2 text-sm">
-                  {record.aiInferences.map((item) => (
-                    <div key={item}>{item}</div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-2 md:grid-cols-2">
-                <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
-                  <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
-                    Account changes
+              <div className="grid gap-2 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+                <div className="grid gap-2">
+                  <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
+                    <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+                      Facts
+                    </div>
+                    <div className="mt-2 space-y-2 text-sm">
+                      {record.facts.map((fact) => (
+                        <div key={fact}>{fact}</div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="mt-2 space-y-2 text-sm text-[var(--muted-strong)]">
-                    {record.accountChanges.map((item) => (
-                      <div key={item}>{item}</div>
-                    ))}
+
+                  <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
+                    <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+                      Analyst assessment
+                    </div>
+                    <div className="mt-2 space-y-2 text-sm">
+                      {record.aiInferences.map((item) => (
+                        <div key={item}>{item}</div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
                   <div className="text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
-                    Device changes
+                    Session changes
                   </div>
-                  <div className="mt-2 space-y-2 text-sm text-[var(--muted-strong)]">
-                    {record.deviceChanges.map((item) => (
-                      <div key={item}>{item}</div>
-                    ))}
+                  <div className="mt-2 grid gap-2 md:grid-cols-2">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        Account
+                      </div>
+                      <div className="mt-2 space-y-2 text-sm text-[var(--muted-strong)]">
+                        {record.accountChanges.map((item) => (
+                          <div key={item}>{item}</div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
+                        Device
+                      </div>
+                      <div className="mt-2 space-y-2 text-sm text-[var(--muted-strong)]">
+                        {record.deviceChanges.map((item) => (
+                          <div key={item}>{item}</div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="panel overflow-hidden">
-                <table className="dense-table">
-                  <thead>
-                    <tr>
-                      <th>Linked entity</th>
-                      <th>Relationship</th>
-                      <th>Risk note</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {record.linkedEntities.length === 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="dense-table min-w-[760px]">
+                    <thead>
                       <tr>
-                        <td colSpan={3} className="text-sm text-[var(--muted)]">
-                          No linked entities on this case.
-                        </td>
+                        <th>IP signal</th>
+                        <th>Geo / ASN</th>
+                        <th>Flags</th>
+                        <th>Linked cases</th>
                       </tr>
-                    ) : (
-                      record.linkedEntities.map((entity) => (
-                        <tr key={entity.entityId}>
-                          <td>
-                            <div className="text-sm font-semibold">{entity.label}</div>
-                            <div className="mt-1 text-xs text-[var(--muted)]">
-                              {entity.entityType}
+                    </thead>
+                    <tbody>
+                      {record.networkObservations.map((observation) => (
+                        <tr key={observation.observationId}>
+                          <td className="w-[30%]">
+                            <div className="mono text-sm font-semibold">{observation.ipAddress}</div>
+                            <div className="mt-1 text-xs text-[var(--muted)]">{observation.label}</div>
+                            <div className="mt-2 text-xs text-[var(--muted-strong)]">{observation.note}</div>
+                          </td>
+                          <td className="w-[24%]">
+                            <div className="text-sm">{observation.geoLabel}</div>
+                            <div className="mt-1 text-xs text-[var(--muted)]">{observation.asnLabel}</div>
+                          </td>
+                          <td className="w-[22%]">
+                            <div className="flex flex-wrap gap-1.5">
+                              <StatusBadge label={observation.reputation} tone={observation.reputation} />
+                              <StatusBadge
+                                label={formatDisposition(observation.disposition)}
+                                tone={
+                                  observation.disposition === "BLOCKED"
+                                    ? "BLOCKED"
+                                    : observation.disposition === "WATCH"
+                                      ? "PENDING_USER"
+                                      : "ALLOW"
+                                }
+                              />
                             </div>
                           </td>
-                          <td className="text-sm">{entity.relationship}</td>
-                          <td className="text-sm text-[var(--muted)]">{entity.riskNote}</td>
+                          <td className="w-[24%] text-sm text-[var(--muted-strong)]">
+                            {observation.linkedCaseIds.join(", ")}
+                          </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
+
+              {record.linkedEntities.length > 0 ? (
+                <div className="panel overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="dense-table min-w-[680px]">
+                      <thead>
+                        <tr>
+                          <th>Linked entity</th>
+                          <th>Relationship</th>
+                          <th>Risk note</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {record.linkedEntities.map((entity) => (
+                          <tr key={entity.entityId}>
+                            <td>
+                              <div className="text-sm font-semibold">{entity.label}</div>
+                              <div className="mt-1 text-xs text-[var(--muted)]">
+                                {entity.entityType}
+                              </div>
+                            </td>
+                            <td className="text-sm">{entity.relationship}</td>
+                            <td className="text-sm text-[var(--muted)]">{entity.riskNote}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </SectionCard>
         </div>
@@ -418,15 +556,17 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
         <SectionCard
           compact
           title="Decision rail"
-          subtitle={record.recommendation.rationale}
         >
           <div className="grid gap-2">
             <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-contrast)] px-3 py-3 text-white">
+              <div className="text-[11px] uppercase tracking-[0.08em] text-white/70">
+                Recommended action
+              </div>
               <div className="flex items-center justify-between gap-2">
-                <div className="text-sm font-semibold">
+                <div className="mt-2 text-sm font-semibold">
                   {formatLabel(record.recommendation.action)}
                 </div>
-                <div className="mono text-xs">{confidence}%</div>
+                <div className="mt-2 mono text-xs">{confidence}%</div>
               </div>
               <div className="mt-3 h-1.5 bg-white/10">
                 <div
@@ -434,6 +574,39 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                   style={{ width: `${confidence}%` }}
                 />
               </div>
+              <div className="mt-3 text-xs leading-5 text-white/78">
+                {record.recommendation.rationale}
+              </div>
+            </div>
+
+            <div className="grid gap-2">
+              <button
+                className="button-primary justify-between"
+                onClick={() => void handleApplyRecommended()}
+                type="button"
+                disabled={pendingAction !== null}
+              >
+                <span>{pendingAction === "apply" ? "Applying..." : "Apply recommendation"}</span>
+                <CheckCheck size={14} absoluteStrokeWidth />
+              </button>
+              <button
+                className="button-secondary justify-between"
+                onClick={() => void handleExportReport()}
+                type="button"
+                disabled={pendingAction !== null}
+              >
+                <span>{pendingAction === "export" ? "Exporting..." : "Export note"}</span>
+                <FileText size={14} absoluteStrokeWidth />
+              </button>
+              <button
+                className="button-danger justify-between"
+                onClick={() => void handleDraftNote()}
+                type="button"
+                disabled={pendingAction !== null}
+              >
+                <span>{pendingAction === "draft-note" ? "Drafting note..." : "Draft note with AI"}</span>
+                <MessageSquareShare size={14} absoluteStrokeWidth />
+              </button>
             </div>
 
             <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
@@ -443,22 +616,68 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                 </div>
                 <Send size={13} className="text-[var(--muted)]" absoluteStrokeWidth />
               </div>
-              <div className="mb-2">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
                 <StatusBadge label={formatLabel(record.prompt.state)} tone={record.prompt.state} />
+                {record.resolutionState === "PENDING_USER" ? (
+                  <StatusBadge label="Awaiting reply" tone="PENDING_USER" />
+                ) : null}
+                {isSeededPrompt ? (
+                  <StatusBadge label="Seeded demo prompt" tone="SIMULATED" />
+                ) : null}
               </div>
-                <div className="text-sm">{record.prompt.messagePreview}</div>
-              {record.resolutionState === "PENDING_USER" ? (
+              {isSeededPrompt ? (
+                <div className="mb-2 text-xs text-[var(--muted-strong)]">
+                  This case is still carrying a seeded demo prompt. Twilio did not send that original
+                  message.
+                </div>
+              ) : null}
+              <div className="text-sm">{record.prompt.messagePreview}</div>
+              {record.resolutionState === "PENDING_USER" && isSeededPrompt ? (
                 <div className="mt-3">
+                  <button
+                    className="button-primary mb-2 w-full justify-between"
+                    onClick={handleSendLivePrompt}
+                    type="button"
+                    disabled={pendingAction !== null}
+                  >
+                    <span>
+                      {pendingAction === "send-live-prompt"
+                        ? "Sending live WhatsApp..."
+                        : "Send live WhatsApp now"}
+                    </span>
+                    <Send size={14} absoluteStrokeWidth />
+                  </button>
                   <button
                     className="button-secondary w-full justify-between"
                     onClick={handleSimulateReply}
                     type="button"
+                    disabled={pendingAction !== null}
                   >
-                    <span>Simulate /tng-login reply</span>
+                    <span>
+                      {pendingAction === "simulate-reply"
+                        ? "Simulating reply..."
+                        : "Simulate /tng-login reply"}
+                    </span>
                     <MessageCircleReply size={14} absoluteStrokeWidth />
                   </button>
                 </div>
               ) : null}
+            </div>
+
+            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
+              <div className="mb-2 text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+                Latest audit
+              </div>
+              <div className="space-y-3">
+                {latestAuditEvents.map((event) => (
+                  <div key={event.eventId}>
+                    <div className="text-sm font-semibold">{event.summary}</div>
+                    <div className="mt-1 text-xs text-[var(--muted)]">
+                      {event.actorName} | {event.createdAt}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
@@ -470,57 +689,15 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
                   <button
                     key={option}
                     className="button-secondary justify-between"
-                    onClick={() => handleOverride(option)}
+                    onClick={() => void handleOverride(option)}
                     type="button"
+                    disabled={pendingAction !== null}
                   >
                     <span>{formatLabel(option)}</span>
                     <span className="text-[11px] text-[var(--muted)]">reason required</span>
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
-              <div className="mb-2 text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
-                Audit trail
-              </div>
-              <div className="space-y-3">
-                {record.auditEvents.map((event) => (
-                  <div key={event.eventId}>
-                    <div className="text-sm font-semibold">{event.summary}</div>
-                    <div className="mt-1 text-xs text-[var(--muted)]">
-                      {event.actorName} | {event.createdAt}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
-              <button
-                className="button-primary justify-between"
-                onClick={handleApplyRecommended}
-                type="button"
-              >
-                <span>{isPending ? "Working..." : "Apply recommendation"}</span>
-                <CheckCheck size={14} absoluteStrokeWidth />
-              </button>
-              <button
-                className="button-secondary justify-between"
-                onClick={handleExportReport}
-                type="button"
-              >
-                <span>Export note</span>
-                <FileText size={14} absoluteStrokeWidth />
-              </button>
-              <button
-                className="button-danger justify-between"
-                onClick={handleDraftNote}
-                type="button"
-              >
-                <span>Draft note with AI</span>
-                <MessageSquareShare size={14} absoluteStrokeWidth />
-              </button>
             </div>
           </div>
         </SectionCard>
@@ -554,11 +731,17 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
         open={sheet === "evidence"}
         onClose={() => setSheet(null)}
         title="Evidence pack"
-        subtitle="Inspectable inputs behind the recommendation."
+        subtitle="Inspectable inputs behind the recommendation. The AI brief is a short summary of current facts, not new evidence."
       >
         {generatedExplanation ? (
           <div className="mb-3 rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 text-sm">
-            {generatedExplanation}
+            <div className="mb-2 text-[11px] uppercase tracking-[0.08em] text-[var(--muted)]">
+              AI analyst brief
+            </div>
+            <div className="mb-3 text-xs text-[var(--muted)]">
+              Generated from the current case record, policy hits, and network signals.
+            </div>
+            <MarkdownContent content={generatedExplanation} />
           </div>
         ) : null}
         <div className="space-y-2">
@@ -609,9 +792,7 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
         subtitle="Support and compliance handoff text."
       >
         <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] p-3">
-          <pre className="whitespace-pre-wrap font-inherit text-sm leading-6">
-            {generatedNote ?? reportContent}
-          </pre>
+          <MarkdownContent content={generatedNote ?? reportContent} />
         </div>
       </Sheet>
     </div>

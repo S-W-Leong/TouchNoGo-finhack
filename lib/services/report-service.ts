@@ -33,6 +33,20 @@ export function buildCaseReport(record: CaseRecord, format: "MARKDOWN" | "JSON" 
     "## AI Inferences",
     ...record.aiInferences.map((item) => `- ${item}`),
     "",
+    "## Network Signals",
+    ...(record.networkObservations.length > 0
+      ? record.networkObservations.map(
+          (observation) =>
+            `- ${observation.ipAddress} | ${observation.geoLabel} | ${observation.asnLabel} | ${observation.disposition} | ${observation.reputation}`,
+        )
+      : ["- No seeded IP observations on this case."]),
+    "",
+    "## Suspicious Actions",
+    ...record.suspiciousActions.map(
+      (action) =>
+        `- ${action.label} | ${action.amountLabel} | ${action.succeeded ? "completed" : "blocked"} | ${action.note}`,
+    ),
+    "",
     "## Policy",
     ...record.policyHits.map((hit) => `- ${hit.policyId}: ${hit.title}`),
     "",

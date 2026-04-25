@@ -236,6 +236,22 @@ select option {
   box-shadow: var(--shadow);
 }
 
+.sheet-modal-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.sheet-card-modal {
+  width: min(1040px, calc(100vw - 32px));
+  max-height: min(90vh, 940px);
+  height: auto;
+}
+
 .dense-table {
   width: 100%;
   border-collapse: collapse;
@@ -282,6 +298,116 @@ select option {
   background: var(--surface-hover);
 }
 
+.markdown-content {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.markdown-content > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3 {
+  margin: 1rem 0 0.45rem;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.markdown-content p,
+.markdown-content ul,
+.markdown-content ol,
+.markdown-content blockquote {
+  margin: 0 0 0.75rem;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  padding-left: 1.1rem;
+}
+
+.markdown-content li + li {
+  margin-top: 0.28rem;
+}
+
+.markdown-content strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.markdown-content code {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 0.08rem 0.32rem;
+  font-size: 0.85em;
+}
+
+.markdown-content pre {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 0.9rem;
+}
+
+.markdown-content pre code {
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.markdown-content table {
+  width: 100%;
+  margin: 0 0 0.9rem;
+  border-collapse: collapse;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+}
+
+.markdown-content thead th {
+  padding: 0.55rem 0.7rem;
+  text-align: left;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-strong);
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.markdown-content td {
+  padding: 0.65rem 0.7rem;
+  border-top: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.markdown-content a {
+  color: var(--tng-blue);
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 102, 204, 0.35);
+  text-underline-offset: 0.16em;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--line-strong);
+  padding-left: 0.85rem;
+  color: var(--text-dim);
+}
+
+.markdown-content hr {
+  border: 0;
+  border-top: 1px solid var(--line-strong);
+  margin: 1rem 0;
+}
+
 @media (max-width: 820px) {
   .app-shell {
     width: min(100vw - 10px, 100%);
@@ -299,6 +425,17 @@ select option {
   }
 
   .sheet-card {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .sheet-modal-panel {
+    align-items: flex-end;
+    padding: 0.35rem;
+  }
+
+  .sheet-card-modal {
+    width: 100%;
+    max-height: min(90vh, 880px);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
 }

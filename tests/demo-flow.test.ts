@@ -1,19 +1,31 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { POST as sweepExpiredPrompts } from "@/app/api/internal/sweep-expired-prompts/route";
 import { applyCaseAction } from "@/lib/services/action-orchestrator";
+import { resetEnvCacheForTests } from "@/lib/config/env";
 import { resetDemoState } from "@/lib/demo-state/store";
 import { getCaseDetail } from "@/lib/services/case-service";
+import { resendLivePrompt } from "@/lib/services/prompt-service";
 import { saveRuleDraft } from "@/lib/services/replay-service";
+import { createEmptyRule } from "@/lib/rules/rule-builder";
 import { resolveCaseFromReply } from "@/lib/services/resolution-service";
 
 describe("seeded demo flow", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
+    delete process.env.VITEST;
+    delete process.env.TWILIO_ACCOUNT_SID;
+    delete process.env.TWILIO_AUTH_TOKEN;
+    delete process.env.TWILIO_MESSAGING_SERVICE_SID;
+    delete process.env.TWILIO_WHATSAPP_FROM;
+    delete process.env.TWILIO_WHATSAPP_TO;
+    delete process.env.TWILIO_STATUS_CALLBACK_URL;
+    resetEnvCacheForTests();
     resetDemoState();
   });
 
   test("applying a severe action updates control state and prompt state", async () => {
-    const record = applyCaseAction({
+    const record = await applyCaseAction({
       caseId: "CASE-ATO-008",
       action: "STEP_UP_VERIFICATION",
       actorName: "Fraud analyst",
@@ -21,12 +33,12 @@ describe("seeded demo flow", () => {
     });
 
     expect(record?.currentControlState).toBe("STEP_UP_REQUIRED");
-    expect(record?.prompt.state).toBe("DELIVERED");
+    expect(record?.prompt.state).toBe("SIMULATED");
     expect(record?.status).toBe("ACTION_APPLIED");
   });
 
   test("replying /tng-login resolves the case as reactivated", async () => {
-    applyCaseAction({
+    await applyCaseAction({
       caseId: "CASE-ATO-008",
       action: "STEP_UP_VERIFICATION",
       actorName: "Fraud analyst",
@@ -55,8 +67,23 @@ describe("seeded demo flow", () => {
     expect(updatedWorkspace.draftRule).toContain(":is_new_device");
   });
 
+  test("saving a new draft rule inserts it into the controls workspace", async () => {
+    const workspace = await import("@/lib/repositories/risk-ops-repository").then((module) =>
+      module.riskOpsRepository.getControlsWorkspace(),
+    );
+    const nextRule = {
+      ...createEmptyRule(workspace),
+      name: "Review new device with low threshold",
+    };
+
+    const updatedWorkspace = saveRuleDraft(nextRule.ruleId, nextRule);
+
+    expect(updatedWorkspace.rules[0]?.ruleId).toBe(nextRule.ruleId);
+    expect(updatedWorkspace.rules[0]?.name).toBe("Review new device with low threshold");
+  });
+
   test("internal sweep route escalates delivered prompts with a valid token", async () => {
-    applyCaseAction({
+    await applyCaseAction({
       caseId: "CASE-ATO-008",
       action: "STEP_UP_VERIFICATION",
       actorName: "Fraud analyst",
@@ -75,5 +102,84 @@ describe("seeded demo flow", () => {
     const record = await getCaseDetail("CASE-ATO-008");
     expect(record?.resolutionState).toBe("ESCALATED");
     expect(record?.prompt.state).toBe("EXPIRED");
+  });
+
+  test("real Twilio send uses the live message sid and queued state mapping", async () => {
+    process.env.TWILIO_ACCOUNT_SID = "AC123";
+    process.env.TWILIO_AUTH_TOKEN = "secret";
+    process.env.TWILIO_MESSAGING_SERVICE_SID = "MG123";
+    process.env.TWILIO_WHATSAPP_TO = "+15551234567";
+    process.env.TWILIO_STATUS_CALLBACK_URL = "https://example.com/api/webhooks/twilio/status";
+    process.env.VITEST = "";
+    resetEnvCacheForTests();
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        sid: "SM123",
+        status: "queued",
+      }),
+    });
+    vi.stubGlobal(
+      "fetch",
+      fetchMock,
+    );
+
+    const record = await applyCaseAction({
+      caseId: "CASE-ATO-008",
+      action: "STEP_UP_VERIFICATION",
+      actorName: "Fraud analyst",
+      actorType: "ANALYST",
+    });
+
+    expect(record?.prompt.messageSid).toBe("SM123");
+    expect(record?.prompt.state).toBe("PENDING_SEND");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [, requestInit] = fetchMock.mock.calls[0] ?? [];
+    expect(requestInit?.body).toBeInstanceOf(URLSearchParams);
+
+    const requestBody = requestInit?.body as URLSearchParams;
+    expect(requestBody.get("To")).toBe("whatsapp:+15551234567");
+    expect(requestBody.get("MessagingServiceSid")).toBe("MG123");
+    expect(requestBody.get("StatusCallback")).toBe(
+      "https://example.com/api/webhooks/twilio/status",
+    );
+  });
+
+  test("manual live resend replaces a seeded prompt with a Twilio message sid", async () => {
+    process.env.TWILIO_ACCOUNT_SID = "AC123";
+    process.env.TWILIO_AUTH_TOKEN = "secret";
+    process.env.TWILIO_WHATSAPP_FROM = "+14155238886";
+    process.env.TWILIO_WHATSAPP_TO = "+60138509983";
+    process.env.APP_URL = "https://whatsapp-agent-5pjot.ondigitalocean.app";
+    process.env.VITEST = "";
+    resetEnvCacheForTests();
+
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        sid: "SM999",
+        status: "queued",
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const record = await resendLivePrompt("CASE-ATO-008");
+
+    expect(record.prompt.messageSid).toBe("SM999");
+    expect(record.prompt.state).toBe("PENDING_SEND");
+    expect(record.auditEvents[0]?.eventType).toBe("PROMPT_RESENT");
+
+    const persisted = await getCaseDetail("CASE-ATO-008");
+    expect(persisted?.prompt.messageSid).toBe("SM999");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    const [, requestInit] = fetchMock.mock.calls[0] ?? [];
+    const requestBody = requestInit?.body as URLSearchParams;
+    expect(requestBody.get("From")).toBe("whatsapp:+14155238886");
+    expect(requestBody.get("StatusCallback")).toBe(
+      "https://whatsapp-agent-5pjot.ondigitalocean.app/api/webhooks/twilio/status",
+    );
   });
 });

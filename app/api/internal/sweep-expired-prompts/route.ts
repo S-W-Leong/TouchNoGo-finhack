@@ -13,7 +13,12 @@ export async function POST(request: Request) {
   }
 
   const updatedCases = getDemoData().cases
-    .filter((record) => record.prompt.state === "SENT" || record.prompt.state === "DELIVERED")
+    .filter((record) =>
+      record.prompt.state === "PENDING_SEND" ||
+      record.prompt.state === "SENT" ||
+      record.prompt.state === "DELIVERED" ||
+      record.prompt.state === "SIMULATED"
+    )
     .map((record) => expirePromptForCase(record.caseId))
     .filter(Boolean);
 

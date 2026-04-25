@@ -14,6 +14,8 @@ const envSchema = z.object({
   TWILIO_AUTH_TOKEN: z.string().optional(),
   TWILIO_MESSAGING_SERVICE_SID: z.string().optional(),
   TWILIO_WHATSAPP_FROM: z.string().optional(),
+  TWILIO_WHATSAPP_TO: z.string().optional(),
+  TWILIO_STATUS_CALLBACK_URL: z.string().optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
@@ -37,11 +39,38 @@ export function canAttemptTwilioSend() {
   return Boolean(
     env.TWILIO_ACCOUNT_SID &&
       env.TWILIO_AUTH_TOKEN &&
-      env.TWILIO_MESSAGING_SERVICE_SID &&
-      env.TWILIO_WHATSAPP_FROM,
+      env.TWILIO_WHATSAPP_TO &&
+      (env.TWILIO_MESSAGING_SERVICE_SID || env.TWILIO_WHATSAPP_FROM),
   );
 }
 
 export function canAttemptAlibaba() {
   return Boolean(getEnv().ALIBABA_MODELSTUDIO_API_KEY);
+}
+
+export function getTwilioStatusCallbackUrl() {
+  const env = getEnv();
+
+  if (env.TWILIO_STATUS_CALLBACK_URL) {
+    return env.TWILIO_STATUS_CALLBACK_URL;
+  }
+
+  try {
+    const callbackUrl = new URL("/api/webhooks/twilio/status", env.APP_URL);
+
+    if (
+      callbackUrl.hostname === "localhost" ||
+      callbackUrl.hostname === "127.0.0.1"
+    ) {
+      return null;
+    }
+
+    return callbackUrl.toString();
+  } catch {
+    return null;
+  }
+}
+
+export function resetEnvCacheForTests() {
+  cachedEnv = null;
 }
