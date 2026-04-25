@@ -6,18 +6,20 @@ import {
   Files,
   Lock,
   MessageSquareShare,
+  Network,
   Scale,
   Send,
   ShieldAlert,
   Timer,
 } from "lucide-react";
 
+import { RiskNetworkGraph } from "@/components/ui/risk-network-graph";
 import { SectionCard } from "@/components/ui/section-card";
 import { Sheet } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { CaseRecord } from "@/lib/domain/schema";
 
-type SheetKind = "score" | "evidence" | "policy" | "note" | null;
+type SheetKind = "score" | "evidence" | "policy" | "note" | "network" | null;
 
 function formatLabel(value: string) {
   return value
@@ -62,6 +64,14 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
               >
                 <Lock size={14} absoluteStrokeWidth />
                 Policy basis
+              </button>
+              <button
+                className="button-secondary"
+                onClick={() => setSheet("network")}
+                type="button"
+              >
+                <Network size={14} absoluteStrokeWidth />
+                Risk network
               </button>
             </div>
           }
@@ -471,6 +481,16 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
             {record.exportNote}
           </pre>
         </div>
+      </Sheet>
+
+      <Sheet
+        wide
+        open={sheet === "network"}
+        onClose={() => setSheet(null)}
+        title="Entity risk network"
+        subtitle="Linked accounts, devices, and beneficiaries connected to this case."
+      >
+        <RiskNetworkGraph record={record} />
       </Sheet>
     </div>
   );

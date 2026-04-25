@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { clsx } from "clsx";
 
 export function Sheet({
   open,
@@ -8,12 +9,14 @@ export function Sheet({
   subtitle,
   onClose,
   children,
+  wide,
 }: {
   open: boolean;
   title: string;
   subtitle?: string;
   onClose: () => void;
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   if (!open) {
     return null;
@@ -27,7 +30,7 @@ export function Sheet({
         onClick={onClose}
         type="button"
       />
-      <div className="sheet-panel">
+      <div className={clsx("sheet-panel", wide && "sheet-panel-wide")}>
         <div className="sheet-card p-5 md:p-6">
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>

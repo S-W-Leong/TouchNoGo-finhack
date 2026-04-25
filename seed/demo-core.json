@@ -15,7 +15,11 @@
     "multiplier": 4.2,
     "windowMinutes": 30,
     "segmentLabel": "MY logins -> transfer-enabled wallets",
-    "signals": ["18 new-device logins", "9 PIN resets", "6 high-value transfer attempts"],
+    "signals": [
+      "18 new-device logins",
+      "9 PIN resets",
+      "6 high-value transfer attempts"
+    ],
     "summary": "Routing signal only. Final action still depends on evidence and policy."
   },
   "queueMetrics": {
@@ -38,12 +42,45 @@
       "currentControlState": "FREEZE_APPLIED",
       "score": 92,
       "riskLevel": "CRITICAL",
-      "reasonChips": ["New device", "PIN reset", "Beneficiary added", "8.7x transfer ratio"],
+      "reasonChips": [
+        "New device",
+        "PIN reset",
+        "Beneficiary added",
+        "8.7x transfer ratio"
+      ],
       "scoreComponents": [
-        { "code": "NEW_DEVICE_24H", "label": "New device within 24h", "points": 20, "evidenceIds": ["EV-101"] },
-        { "code": "PIN_RESET_24H", "label": "PIN reset within 24h", "points": 15, "evidenceIds": ["EV-102"] },
-        { "code": "AMOUNT_RATIO_HIGH", "label": "Transfer amount 8.7x baseline", "points": 18, "evidenceIds": ["EV-104"] },
-        { "code": "LINKED_PRIOR_CASE", "label": "Linked device in prior reviewed case", "points": 15, "evidenceIds": ["EV-105"] }
+        {
+          "code": "NEW_DEVICE_24H",
+          "label": "New device within 24h",
+          "points": 20,
+          "evidenceIds": [
+            "EV-101"
+          ]
+        },
+        {
+          "code": "PIN_RESET_24H",
+          "label": "PIN reset within 24h",
+          "points": 15,
+          "evidenceIds": [
+            "EV-102"
+          ]
+        },
+        {
+          "code": "AMOUNT_RATIO_HIGH",
+          "label": "Transfer amount 8.7x baseline",
+          "points": 18,
+          "evidenceIds": [
+            "EV-104"
+          ]
+        },
+        {
+          "code": "LINKED_PRIOR_CASE",
+          "label": "Linked device in prior reviewed case",
+          "points": 15,
+          "evidenceIds": [
+            "EV-105"
+          ]
+        }
       ],
       "facts": [
         "Device age is 2 hours.",
@@ -56,8 +93,14 @@
       "missingData": [
         "No successful customer contact confirmation yet."
       ],
-      "accountChanges": ["PIN reset at 02:01", "Beneficiary addition at 02:04"],
-      "deviceChanges": ["First-seen Android device", "Location drift overnight"],
+      "accountChanges": [
+        "PIN reset at 02:01",
+        "Beneficiary addition at 02:04"
+      ],
+      "deviceChanges": [
+        "First-seen Android device",
+        "Location drift overnight"
+      ],
       "linkedEntities": [
         {
           "entityId": "DEV-772",
@@ -65,6 +108,20 @@
           "label": "Android 15 / DEV-772",
           "relationship": "Shared fingerprint with prior reviewed case",
           "riskNote": "Seen in one resolved unauthorized-transaction investigation"
+        },
+        {
+          "entityId": "BEN-101",
+          "entityType": "BENEFICIARY",
+          "label": "New payee J** L***",
+          "relationship": "Beneficiary added 18 min before transfer",
+          "riskNote": "Payee added in same session as device change"
+        },
+        {
+          "entityId": "ACC-221",
+          "entityType": "ACCOUNT",
+          "label": "Destination account / ACC-221",
+          "relationship": "Receiving account flagged in prior cluster",
+          "riskNote": "Appeared in CLUSTER-2025-09 mule investigation"
         }
       ],
       "suspiciousActions": [
@@ -77,29 +134,128 @@
         }
       ],
       "timeline": [
-        { "eventId": "TL-101", "occurredAt": "01:58", "type": "LOGIN", "label": "Login from new device", "details": "Android device first seen in wallet history", "succeeded": true },
-        { "eventId": "TL-102", "occurredAt": "02:01", "type": "PIN_RESET", "label": "PIN reset completed", "details": "Reset from same session", "succeeded": true },
-        { "eventId": "TL-103", "occurredAt": "02:06", "type": "TRANSFER_ATTEMPT", "label": "High-value transfer attempted", "details": "Amount exceeds 30-day average by 8.7x", "succeeded": false },
-        { "eventId": "TL-104", "occurredAt": "02:07", "type": "CONTROL_APPLY", "label": "Freeze action applied", "details": "Automatic severe-control path", "succeeded": true }
+        {
+          "eventId": "TL-101",
+          "occurredAt": "01:58",
+          "type": "LOGIN",
+          "label": "Login from new device",
+          "details": "Android device first seen in wallet history",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-102",
+          "occurredAt": "02:01",
+          "type": "PIN_RESET",
+          "label": "PIN reset completed",
+          "details": "Reset from same session",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-103",
+          "occurredAt": "02:06",
+          "type": "TRANSFER_ATTEMPT",
+          "label": "High-value transfer attempted",
+          "details": "Amount exceeds 30-day average by 8.7x",
+          "succeeded": false
+        },
+        {
+          "eventId": "TL-104",
+          "occurredAt": "02:07",
+          "type": "CONTROL_APPLY",
+          "label": "Freeze action applied",
+          "details": "Automatic severe-control path",
+          "succeeded": true
+        }
       ],
       "evidenceItems": [
-        { "evidenceId": "EV-101", "kind": "FACT", "title": "New device within 24h", "summary": "Device DEV-772 first seen 2 hours ago.", "source": "behavior_events", "observedAt": "2026-04-25T01:58:00+08:00", "policyIds": ["POL-ATO-03"] },
-        { "evidenceId": "EV-102", "kind": "FACT", "title": "PIN reset before transfer", "summary": "PIN reset occurred 5 minutes before transfer attempt.", "source": "account_changes", "observedAt": "2026-04-25T02:01:00+08:00", "policyIds": ["POL-ATO-03"] },
-        { "evidenceId": "EV-104", "kind": "FACT", "title": "Transfer amount exceeds baseline", "summary": "Attempted transfer is 8.7x the 30-day average.", "source": "transactions", "observedAt": "2026-04-25T02:06:00+08:00", "policyIds": ["POL-OPS-04"] },
-        { "evidenceId": "EV-105", "kind": "INFERENCE", "title": "ATO sequence is highly coherent", "summary": "Signals appear in the classic takeover order: login, change, move money.", "source": "ai_explanation", "observedAt": "2026-04-25T02:08:00+08:00", "confidence": 0.84, "policyIds": ["POL-ATO-03"] }
+        {
+          "evidenceId": "EV-101",
+          "kind": "FACT",
+          "title": "New device within 24h",
+          "summary": "Device DEV-772 first seen 2 hours ago.",
+          "source": "behavior_events",
+          "observedAt": "2026-04-25T01:58:00+08:00",
+          "policyIds": [
+            "POL-ATO-03"
+          ]
+        },
+        {
+          "evidenceId": "EV-102",
+          "kind": "FACT",
+          "title": "PIN reset before transfer",
+          "summary": "PIN reset occurred 5 minutes before transfer attempt.",
+          "source": "account_changes",
+          "observedAt": "2026-04-25T02:01:00+08:00",
+          "policyIds": [
+            "POL-ATO-03"
+          ]
+        },
+        {
+          "evidenceId": "EV-104",
+          "kind": "FACT",
+          "title": "Transfer amount exceeds baseline",
+          "summary": "Attempted transfer is 8.7x the 30-day average.",
+          "source": "transactions",
+          "observedAt": "2026-04-25T02:06:00+08:00",
+          "policyIds": [
+            "POL-OPS-04"
+          ]
+        },
+        {
+          "evidenceId": "EV-105",
+          "kind": "INFERENCE",
+          "title": "ATO sequence is highly coherent",
+          "summary": "Signals appear in the classic takeover order: login, change, move money.",
+          "source": "ai_explanation",
+          "observedAt": "2026-04-25T02:08:00+08:00",
+          "confidence": 0.84,
+          "policyIds": [
+            "POL-ATO-03"
+          ]
+        }
       ],
       "policyHits": [
-        { "policyId": "POL-ATO-03", "title": "ATO severe action policy", "explanation": "Freeze is allowed when new device, account reset, and money-movement risk occur in the same session.", "actionAllowList": ["STEP_UP_VERIFICATION", "FREEZE_ACCOUNT", "ESCALATE"] },
-        { "policyId": "POL-OPS-04", "title": "Prevent outbound loss", "explanation": "Interrupt movement before completion when transfer risk is high and customer verification is missing.", "actionAllowList": ["REVIEW", "FREEZE_ACCOUNT", "ESCALATE"] }
+        {
+          "policyId": "POL-ATO-03",
+          "title": "ATO severe action policy",
+          "explanation": "Freeze is allowed when new device, account reset, and money-movement risk occur in the same session.",
+          "actionAllowList": [
+            "STEP_UP_VERIFICATION",
+            "FREEZE_ACCOUNT",
+            "ESCALATE"
+          ]
+        },
+        {
+          "policyId": "POL-OPS-04",
+          "title": "Prevent outbound loss",
+          "explanation": "Interrupt movement before completion when transfer risk is high and customer verification is missing.",
+          "actionAllowList": [
+            "REVIEW",
+            "FREEZE_ACCOUNT",
+            "ESCALATE"
+          ]
+        }
       ],
       "recommendation": {
         "recommendationId": "REC-001",
         "action": "FREEZE_ACCOUNT",
         "confidence": 0.84,
         "rationale": "Freeze now, send re-verification, and keep human override visible until identity proof arrives.",
-        "evidenceIds": ["EV-101", "EV-102", "EV-104", "EV-105"],
-        "policyIds": ["POL-ATO-03", "POL-OPS-04"],
-        "humanOverrideOptions": ["STEP_UP_VERIFICATION", "ESCALATE", "ALLOW"]
+        "evidenceIds": [
+          "EV-101",
+          "EV-102",
+          "EV-104",
+          "EV-105"
+        ],
+        "policyIds": [
+          "POL-ATO-03",
+          "POL-OPS-04"
+        ],
+        "humanOverrideOptions": [
+          "STEP_UP_VERIFICATION",
+          "ESCALATE",
+          "ALLOW"
+        ]
       },
       "prompt": {
         "promptId": "PR-001",
@@ -111,9 +267,30 @@
         "deliveredAt": "2026-04-25T02:08:21+08:00"
       },
       "auditEvents": [
-        { "eventId": "AE-001", "actorType": "SYSTEM", "actorName": "ScoreEngine", "eventType": "SCORE_COMPUTED", "summary": "Deterministic score computed at 92.", "createdAt": "2026-04-25T02:06:30+08:00" },
-        { "eventId": "AE-002", "actorType": "SYSTEM", "actorName": "ActionOrchestrator", "eventType": "ACTION_APPLIED", "summary": "Freeze applied automatically on high-confidence path.", "createdAt": "2026-04-25T02:07:11+08:00" },
-        { "eventId": "AE-003", "actorType": "SYSTEM", "actorName": "PromptService", "eventType": "PROMPT_SENT", "summary": "WhatsApp re-verification prompt sent and delivered.", "createdAt": "2026-04-25T02:08:21+08:00" }
+        {
+          "eventId": "AE-001",
+          "actorType": "SYSTEM",
+          "actorName": "ScoreEngine",
+          "eventType": "SCORE_COMPUTED",
+          "summary": "Deterministic score computed at 92.",
+          "createdAt": "2026-04-25T02:06:30+08:00"
+        },
+        {
+          "eventId": "AE-002",
+          "actorType": "SYSTEM",
+          "actorName": "ActionOrchestrator",
+          "eventType": "ACTION_APPLIED",
+          "summary": "Freeze applied automatically on high-confidence path.",
+          "createdAt": "2026-04-25T02:07:11+08:00"
+        },
+        {
+          "eventId": "AE-003",
+          "actorType": "SYSTEM",
+          "actorName": "PromptService",
+          "eventType": "PROMPT_SENT",
+          "summary": "WhatsApp re-verification prompt sent and delivered.",
+          "createdAt": "2026-04-25T02:08:21+08:00"
+        }
       ],
       "exportNote": "CASE-ATO-001: High-confidence account takeover. Freeze applied. Transfer prevented before completion. Pending user re-verification."
     },
@@ -130,42 +307,176 @@
       "currentControlState": "STEP_UP_REQUIRED",
       "score": 79,
       "riskLevel": "HIGH",
-      "reasonChips": ["Dormant login", "New payee", "Failed step-up"],
-      "scoreComponents": [
-        { "code": "DORMANT_REACTIVATION", "label": "Dormant wallet reactivated", "points": 18, "evidenceIds": ["EV-201"] },
-        { "code": "FAILED_STEP_UP", "label": "Prior step-up failed", "points": 16, "evidenceIds": ["EV-202"] },
-        { "code": "NEW_PAYEE", "label": "New payee within 24h", "points": 12, "evidenceIds": ["EV-203"] }
+      "reasonChips": [
+        "Dormant login",
+        "New payee",
+        "Failed step-up"
       ],
-      "facts": ["Wallet inactive for 63 days.", "Step-up challenge failed twice."],
-      "aiInferences": ["Behavior is suspicious but not yet severe enough for auto-freeze."],
-      "missingData": ["Customer has not completed re-login yet."],
-      "accountChanges": ["New payee added at 15:22"],
-      "deviceChanges": ["Login from new iPhone device"],
-      "linkedEntities": [],
+      "scoreComponents": [
+        {
+          "code": "DORMANT_REACTIVATION",
+          "label": "Dormant wallet reactivated",
+          "points": 18,
+          "evidenceIds": [
+            "EV-201"
+          ]
+        },
+        {
+          "code": "FAILED_STEP_UP",
+          "label": "Prior step-up failed",
+          "points": 16,
+          "evidenceIds": [
+            "EV-202"
+          ]
+        },
+        {
+          "code": "NEW_PAYEE",
+          "label": "New payee within 24h",
+          "points": 12,
+          "evidenceIds": [
+            "EV-203"
+          ]
+        }
+      ],
+      "facts": [
+        "Wallet inactive for 63 days.",
+        "Step-up challenge failed twice."
+      ],
+      "aiInferences": [
+        "Behavior is suspicious but not yet severe enough for auto-freeze."
+      ],
+      "missingData": [
+        "Customer has not completed re-login yet."
+      ],
+      "accountChanges": [
+        "New payee added at 15:22"
+      ],
+      "deviceChanges": [
+        "Login from new iPhone device"
+      ],
+      "linkedEntities": [
+        {
+          "entityId": "DEV-831",
+          "entityType": "DEVICE",
+          "label": "iPhone 16 / DEV-831",
+          "relationship": "First login from this device",
+          "riskNote": "New device registered 2h before step-up failure"
+        },
+        {
+          "entityId": "BEN-408",
+          "entityType": "BENEFICIARY",
+          "label": "New payee / BEN-408",
+          "relationship": "Beneficiary added at 15:22",
+          "riskNote": "Payee added same session as failed verification"
+        },
+        {
+          "entityId": "ACC-449",
+          "entityType": "ACCOUNT",
+          "label": "Top-up destination / ACC-449",
+          "relationship": "Top-up destination added in session",
+          "riskNote": ""
+        }
+      ],
       "suspiciousActions": [
-        { "actionId": "SA-2", "label": "Top-up attempt", "amountLabel": "MYR 1,900", "succeeded": false, "note": "Held pending verification" }
+        {
+          "actionId": "SA-2",
+          "label": "Top-up attempt",
+          "amountLabel": "MYR 1,900",
+          "succeeded": false,
+          "note": "Held pending verification"
+        }
       ],
       "timeline": [
-        { "eventId": "TL-201", "occurredAt": "15:18", "type": "LOGIN", "label": "Dormant wallet reactivated", "details": "First login in 63 days", "succeeded": true },
-        { "eventId": "TL-202", "occurredAt": "15:22", "type": "PAYEE_ADD", "label": "New payee added", "details": "Same session as reactivation", "succeeded": true },
-        { "eventId": "TL-203", "occurredAt": "15:24", "type": "STEP_UP", "label": "Step-up required", "details": "Challenge failed twice", "succeeded": false }
+        {
+          "eventId": "TL-201",
+          "occurredAt": "15:18",
+          "type": "LOGIN",
+          "label": "Dormant wallet reactivated",
+          "details": "First login in 63 days",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-202",
+          "occurredAt": "15:22",
+          "type": "PAYEE_ADD",
+          "label": "New payee added",
+          "details": "Same session as reactivation",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-203",
+          "occurredAt": "15:24",
+          "type": "STEP_UP",
+          "label": "Step-up required",
+          "details": "Challenge failed twice",
+          "succeeded": false
+        }
       ],
       "evidenceItems": [
-        { "evidenceId": "EV-201", "kind": "FACT", "title": "Dormant wallet reactivated", "summary": "No user activity for 63 days before this login.", "source": "wallet_activity", "observedAt": "2026-04-25T15:18:00+08:00", "policyIds": ["POL-ATO-02"] },
-        { "evidenceId": "EV-202", "kind": "FACT", "title": "Step-up challenge failed", "summary": "Two consecutive re-login challenges failed.", "source": "auth_events", "observedAt": "2026-04-25T15:24:00+08:00", "policyIds": ["POL-ATO-02"] },
-        { "evidenceId": "EV-203", "kind": "FACT", "title": "New payee added", "summary": "New payee created before attempted top-up.", "source": "beneficiary_events", "observedAt": "2026-04-25T15:22:00+08:00", "policyIds": ["POL-OPS-02"] }
+        {
+          "evidenceId": "EV-201",
+          "kind": "FACT",
+          "title": "Dormant wallet reactivated",
+          "summary": "No user activity for 63 days before this login.",
+          "source": "wallet_activity",
+          "observedAt": "2026-04-25T15:18:00+08:00",
+          "policyIds": [
+            "POL-ATO-02"
+          ]
+        },
+        {
+          "evidenceId": "EV-202",
+          "kind": "FACT",
+          "title": "Step-up challenge failed",
+          "summary": "Two consecutive re-login challenges failed.",
+          "source": "auth_events",
+          "observedAt": "2026-04-25T15:24:00+08:00",
+          "policyIds": [
+            "POL-ATO-02"
+          ]
+        },
+        {
+          "evidenceId": "EV-203",
+          "kind": "FACT",
+          "title": "New payee added",
+          "summary": "New payee created before attempted top-up.",
+          "source": "beneficiary_events",
+          "observedAt": "2026-04-25T15:22:00+08:00",
+          "policyIds": [
+            "POL-OPS-02"
+          ]
+        }
       ],
       "policyHits": [
-        { "policyId": "POL-ATO-02", "title": "ATO step-up policy", "explanation": "Require re-verification before money movement when signals are high but not yet severe.", "actionAllowList": ["REVIEW", "STEP_UP_VERIFICATION", "ESCALATE"] }
+        {
+          "policyId": "POL-ATO-02",
+          "title": "ATO step-up policy",
+          "explanation": "Require re-verification before money movement when signals are high but not yet severe.",
+          "actionAllowList": [
+            "REVIEW",
+            "STEP_UP_VERIFICATION",
+            "ESCALATE"
+          ]
+        }
       ],
       "recommendation": {
         "recommendationId": "REC-008",
         "action": "STEP_UP_VERIFICATION",
         "confidence": 0.67,
         "rationale": "Hold the wallet at step-up rather than freeze. Keep the human override visible.",
-        "evidenceIds": ["EV-201", "EV-202", "EV-203"],
-        "policyIds": ["POL-ATO-02"],
-        "humanOverrideOptions": ["FREEZE_ACCOUNT", "REVIEW", "ALLOW"]
+        "evidenceIds": [
+          "EV-201",
+          "EV-202",
+          "EV-203"
+        ],
+        "policyIds": [
+          "POL-ATO-02"
+        ],
+        "humanOverrideOptions": [
+          "FREEZE_ACCOUNT",
+          "REVIEW",
+          "ALLOW"
+        ]
       },
       "prompt": {
         "promptId": "PR-008",
@@ -176,7 +487,14 @@
         "sentAt": "2026-04-25T15:25:00+08:00"
       },
       "auditEvents": [
-        { "eventId": "AE-201", "actorType": "SYSTEM", "actorName": "PolicyEngine", "eventType": "ACTION_RECOMMENDED", "summary": "Step-up verification recommended.", "createdAt": "2026-04-25T15:24:30+08:00" }
+        {
+          "eventId": "AE-201",
+          "actorType": "SYSTEM",
+          "actorName": "PolicyEngine",
+          "eventType": "ACTION_RECOMMENDED",
+          "summary": "Step-up verification recommended.",
+          "createdAt": "2026-04-25T15:24:30+08:00"
+        }
       ],
       "exportNote": "CASE-ATO-008: High-risk reactivation with failed step-up. Prompt sent. Pending user completion."
     },
@@ -193,42 +511,167 @@
       "currentControlState": "REVIEW_PENDING",
       "score": 71,
       "riskLevel": "HIGH",
-      "reasonChips": ["New device", "Linked prior case", "Beneficiary change"],
-      "scoreComponents": [
-        { "code": "NEW_DEVICE_24H", "label": "New device within 24h", "points": 20, "evidenceIds": ["EV-301"] },
-        { "code": "LINKED_PRIOR_CASE", "label": "Linked device in prior case", "points": 15, "evidenceIds": ["EV-302"] },
-        { "code": "BENEFICIARY_ADDED_24H", "label": "Beneficiary added within 24h", "points": 10, "evidenceIds": ["EV-303"] }
+      "reasonChips": [
+        "New device",
+        "Linked prior case",
+        "Beneficiary change"
       ],
-      "facts": ["Beneficiary changed before payment.", "Customer report is still pending callback."],
-      "aiInferences": ["Potential follow-on loss after takeover. Analyst review still needed."],
-      "missingData": ["No confirmed customer statement yet."],
-      "accountChanges": ["Beneficiary change at 11:11"],
-      "deviceChanges": ["New Samsung device at 10:58"],
-      "linkedEntities": [],
+      "scoreComponents": [
+        {
+          "code": "NEW_DEVICE_24H",
+          "label": "New device within 24h",
+          "points": 20,
+          "evidenceIds": [
+            "EV-301"
+          ]
+        },
+        {
+          "code": "LINKED_PRIOR_CASE",
+          "label": "Linked device in prior case",
+          "points": 15,
+          "evidenceIds": [
+            "EV-302"
+          ]
+        },
+        {
+          "code": "BENEFICIARY_ADDED_24H",
+          "label": "Beneficiary added within 24h",
+          "points": 10,
+          "evidenceIds": [
+            "EV-303"
+          ]
+        }
+      ],
+      "facts": [
+        "Beneficiary changed before payment.",
+        "Customer report is still pending callback."
+      ],
+      "aiInferences": [
+        "Potential follow-on loss after takeover. Analyst review still needed."
+      ],
+      "missingData": [
+        "No confirmed customer statement yet."
+      ],
+      "accountChanges": [
+        "Beneficiary change at 11:11"
+      ],
+      "deviceChanges": [
+        "New Samsung device at 10:58"
+      ],
+      "linkedEntities": [
+        {
+          "entityId": "BEN-203",
+          "entityType": "BENEFICIARY",
+          "label": "New payee / BEN-203",
+          "relationship": "Beneficiary changed 13 min before payment",
+          "riskNote": "Beneficiary substitution is primary fraud vector on this case"
+        },
+        {
+          "entityId": "DEV-912",
+          "entityType": "DEVICE",
+          "label": "Samsung Galaxy / DEV-912",
+          "relationship": "New device at 10:58",
+          "riskNote": "Device registered same session as beneficiary change"
+        }
+      ],
       "suspiciousActions": [
-        { "actionId": "SA-3", "label": "Payment succeeded", "amountLabel": "MYR 1,240", "succeeded": true, "note": "Requires escalation and case note handoff" }
+        {
+          "actionId": "SA-3",
+          "label": "Payment succeeded",
+          "amountLabel": "MYR 1,240",
+          "succeeded": true,
+          "note": "Requires escalation and case note handoff"
+        }
       ],
       "timeline": [
-        { "eventId": "TL-301", "occurredAt": "10:58", "type": "LOGIN", "label": "Login from new device", "details": "New Samsung device first seen", "succeeded": true },
-        { "eventId": "TL-302", "occurredAt": "11:11", "type": "BENEFICIARY_ADD", "label": "Beneficiary edited", "details": "Payout details changed before payment", "succeeded": true },
-        { "eventId": "TL-303", "occurredAt": "11:14", "type": "PAYMENT", "label": "Payment succeeded", "details": "Unauthorized transaction suspected", "succeeded": true }
+        {
+          "eventId": "TL-301",
+          "occurredAt": "10:58",
+          "type": "LOGIN",
+          "label": "Login from new device",
+          "details": "New Samsung device first seen",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-302",
+          "occurredAt": "11:11",
+          "type": "BENEFICIARY_ADD",
+          "label": "Beneficiary edited",
+          "details": "Payout details changed before payment",
+          "succeeded": true
+        },
+        {
+          "eventId": "TL-303",
+          "occurredAt": "11:14",
+          "type": "PAYMENT",
+          "label": "Payment succeeded",
+          "details": "Unauthorized transaction suspected",
+          "succeeded": true
+        }
       ],
       "evidenceItems": [
-        { "evidenceId": "EV-301", "kind": "FACT", "title": "New Samsung device", "summary": "Device first seen today.", "source": "behavior_events", "observedAt": "2026-04-25T10:58:00+08:00", "policyIds": ["POL-OPS-05"] },
-        { "evidenceId": "EV-302", "kind": "FACT", "title": "Linked prior case", "summary": "Device fingerprint overlaps with prior case history.", "source": "entity_edges", "observedAt": "2026-04-25T11:00:00+08:00", "policyIds": ["POL-OPS-05"] },
-        { "evidenceId": "EV-303", "kind": "POLICY", "title": "Follow-on unauthorized transaction policy", "summary": "Escalate when funds may already have left and customer contact is incomplete.", "source": "policy_engine", "observedAt": "2026-04-25T11:15:00+08:00", "policyIds": ["POL-OPS-05"] }
+        {
+          "evidenceId": "EV-301",
+          "kind": "FACT",
+          "title": "New Samsung device",
+          "summary": "Device first seen today.",
+          "source": "behavior_events",
+          "observedAt": "2026-04-25T10:58:00+08:00",
+          "policyIds": [
+            "POL-OPS-05"
+          ]
+        },
+        {
+          "evidenceId": "EV-302",
+          "kind": "FACT",
+          "title": "Linked prior case",
+          "summary": "Device fingerprint overlaps with prior case history.",
+          "source": "entity_edges",
+          "observedAt": "2026-04-25T11:00:00+08:00",
+          "policyIds": [
+            "POL-OPS-05"
+          ]
+        },
+        {
+          "evidenceId": "EV-303",
+          "kind": "POLICY",
+          "title": "Follow-on unauthorized transaction policy",
+          "summary": "Escalate when funds may already have left and customer contact is incomplete.",
+          "source": "policy_engine",
+          "observedAt": "2026-04-25T11:15:00+08:00",
+          "policyIds": [
+            "POL-OPS-05"
+          ]
+        }
       ],
       "policyHits": [
-        { "policyId": "POL-OPS-05", "title": "Post-loss escalation policy", "explanation": "Escalate suspected unauthorized transactions with incomplete customer confirmation.", "actionAllowList": ["REVIEW", "ESCALATE"] }
+        {
+          "policyId": "POL-OPS-05",
+          "title": "Post-loss escalation policy",
+          "explanation": "Escalate suspected unauthorized transactions with incomplete customer confirmation.",
+          "actionAllowList": [
+            "REVIEW",
+            "ESCALATE"
+          ]
+        }
       ],
       "recommendation": {
         "recommendationId": "REC-204",
         "action": "ESCALATE",
         "confidence": 0.61,
         "rationale": "Possible loss already occurred. Escalate with a complete evidence pack and keep override visible.",
-        "evidenceIds": ["EV-301", "EV-302", "EV-303"],
-        "policyIds": ["POL-OPS-05"],
-        "humanOverrideOptions": ["REVIEW", "ALLOW"]
+        "evidenceIds": [
+          "EV-301",
+          "EV-302",
+          "EV-303"
+        ],
+        "policyIds": [
+          "POL-OPS-05"
+        ],
+        "humanOverrideOptions": [
+          "REVIEW",
+          "ALLOW"
+        ]
       },
       "prompt": {
         "promptId": "PR-204",
@@ -239,22 +682,43 @@
         "sentAt": "2026-04-25T11:18:00+08:00"
       },
       "auditEvents": [
-        { "eventId": "AE-301", "actorType": "ANALYST", "actorName": "Nora Lee", "eventType": "CASE_OPENED", "summary": "Analyst opened case for manual investigation.", "createdAt": "2026-04-25T11:16:00+08:00" }
+        {
+          "eventId": "AE-301",
+          "actorType": "ANALYST",
+          "actorName": "Nora Lee",
+          "eventType": "CASE_OPENED",
+          "summary": "Analyst opened case for manual investigation.",
+          "createdAt": "2026-04-25T11:16:00+08:00"
+        }
       ],
       "exportNote": "CASE-UTX-204: Unauthorized transaction likely succeeded after suspicious device and beneficiary change. Escalation recommended."
     }
   ],
   "controls": {
     "actionBands": [
-      { "minScore": 0, "maxScore": 69, "action": "ALLOW" },
-      { "minScore": 70, "maxScore": 84, "action": "STEP_UP_VERIFICATION" },
-      { "minScore": 85, "maxScore": 100, "action": "FREEZE_ACCOUNT" }
+      {
+        "minScore": 0,
+        "maxScore": 69,
+        "action": "ALLOW"
+      },
+      {
+        "minScore": 70,
+        "maxScore": 84,
+        "action": "STEP_UP_VERIFICATION"
+      },
+      {
+        "minScore": 85,
+        "maxScore": 100,
+        "action": "FREEZE_ACCOUNT"
+      }
     ],
     "variableDefinitions": [
       {
         "name": "is_new_device",
         "type": "BOOLEAN",
-        "sourceFields": ["behavior_events.device_first_seen_at"],
+        "sourceFields": [
+          "behavior_events.device_first_seen_at"
+        ],
         "lookbackWindow": "24h",
         "transform": "device_age_hours <= 24",
         "description": "True when the current device is first seen within the last 24 hours."
@@ -262,7 +726,9 @@
       {
         "name": "pin_reset_24h",
         "type": "BOOLEAN",
-        "sourceFields": ["account_changes.pin_reset_at"],
+        "sourceFields": [
+          "account_changes.pin_reset_at"
+        ],
         "lookbackWindow": "24h",
         "transform": "pin_reset_at >= now - 24h",
         "description": "True when the user reset PIN within the last 24 hours."
@@ -270,7 +736,10 @@
       {
         "name": "amount_ratio_30d",
         "type": "RATIO",
-        "sourceFields": ["transactions.amount", "transactions.avg_30d"],
+        "sourceFields": [
+          "transactions.amount",
+          "transactions.avg_30d"
+        ],
         "lookbackWindow": "30d",
         "transform": "amount / avg_30d",
         "description": "Current transfer amount divided by the user's 30-day average."
@@ -280,13 +749,39 @@
     "draftRule": "FREEZE_ACCOUNT if :is_new_device = true and :pin_reset_24h = true and :amount_ratio_30d >= 5",
     "replaySummary": {
       "evaluatedCases": 10,
-      "before": { "badCasesCaught": 5, "goodUsersDelayed": 1, "analystReviews": 7 },
-      "after": { "badCasesCaught": 6, "goodUsersDelayed": 2, "analystReviews": 9 }
+      "before": {
+        "badCasesCaught": 5,
+        "goodUsersDelayed": 1,
+        "analystReviews": 7
+      },
+      "after": {
+        "badCasesCaught": 6,
+        "goodUsersDelayed": 2,
+        "analystReviews": 9
+      }
     },
     "replayScenarios": [
-      { "scenarioId": "RS-1", "label": "Primary ATO case", "beforeAction": "STEP_UP_VERIFICATION", "afterAction": "FREEZE_ACCOUNT", "impact": "One extra bad case stopped before transfer completion." },
-      { "scenarioId": "RS-2", "label": "Dormant wallet recovery", "beforeAction": "ALLOW", "afterAction": "STEP_UP_VERIFICATION", "impact": "One extra good user delay introduced." },
-      { "scenarioId": "RS-3", "label": "Unauthorized transaction backup case", "beforeAction": "REVIEW", "afterAction": "ESCALATE", "impact": "Analyst workload rises but evidence pack is more complete." }
+      {
+        "scenarioId": "RS-1",
+        "label": "Primary ATO case",
+        "beforeAction": "STEP_UP_VERIFICATION",
+        "afterAction": "FREEZE_ACCOUNT",
+        "impact": "One extra bad case stopped before transfer completion."
+      },
+      {
+        "scenarioId": "RS-2",
+        "label": "Dormant wallet recovery",
+        "beforeAction": "ALLOW",
+        "afterAction": "STEP_UP_VERIFICATION",
+        "impact": "One extra good user delay introduced."
+      },
+      {
+        "scenarioId": "RS-3",
+        "label": "Unauthorized transaction backup case",
+        "beforeAction": "REVIEW",
+        "afterAction": "ESCALATE",
+        "impact": "Analyst workload rises but evidence pack is more complete."
+      }
     ],
     "rules": [
       {
