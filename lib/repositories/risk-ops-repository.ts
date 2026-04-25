@@ -1,5 +1,5 @@
 import type { CaseRecord, ControlsWorkspace, QueueBanner, QueueMetrics } from "@/lib/domain/schema";
-import { loadDemoData } from "@/lib/seed/loaders";
+import { getCaseFromState, getDemoData } from "@/lib/demo-state/store";
 
 export interface QueueRow {
   caseId: string;
@@ -28,11 +28,12 @@ export interface RiskOpsRepository {
 
 class SeedRiskOpsRepository implements RiskOpsRepository {
   async getQueueSnapshot(): Promise<QueueSnapshot> {
-    const data = loadDemoData();
+    const data = getDemoData();
+    const metrics = deriveQueueMetrics(data.cases);
 
     return {
       banner: data.queueBanner,
-      metrics: data.queueMetrics,
+      metrics,
       rows: [...data.cases]
         .sort((left, right) => right.score - left.score)
         .map((record) => ({
@@ -51,15 +52,30 @@ class SeedRiskOpsRepository implements RiskOpsRepository {
   }
 
   async getCaseDetail(caseId: string) {
-    const data = loadDemoData();
-    return data.cases.find((record) => record.caseId === caseId) ?? null;
+    return getCaseFromState(caseId);
   }
 
   async getControlsWorkspace() {
-    const data = loadDemoData();
+    const data = getDemoData();
     return data.controls;
   }
 }
 
 export const riskOpsRepository: RiskOpsRepository = new SeedRiskOpsRepository();
 
+function deriveQueueMetrics(cases: CaseRecord[]): QueueMetrics {
+  return {
+    openCases: cases.filter((record) => record.status !== "RESOLVED" && record.status !== "CLOSED").length,
+    autoActionReady: cases.filter((record) =>
+      record.recommendation.action === "FREEZE_ACCOUNT" ||
+      record.recommendation.action === "STEP_UP_VERIFICATION",
+    ).length,
+    pendingUser: cases.filter((record) => record.resolutionState === "PENDING_USER").length,
+    preventedTransfers: cases.reduce((count, record) => {
+      return (
+        count +
+        record.suspiciousActions.filter((action) => action.succeeded === false).length
+      );
+    }, 0),
+  };
+}

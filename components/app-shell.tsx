@@ -28,13 +28,13 @@ export function AppShell({
         <div className="flex flex-col gap-4 px-4 py-3 md:px-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--tng-blue)] text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-md)] bg-[var(--surface-contrast)] text-white">
                 <Shield size={18} absoluteStrokeWidth />
               </div>
 
               <div>
                 <p className="text-[15px] font-semibold tracking-tight">TNG RiskOps Agent</p>
-                <p className="text-sm text-[var(--muted)]">
+                <p className="text-sm text-[var(--muted-strong)]">
                   Account takeover operations workspace
                 </p>
               </div>
@@ -60,10 +60,10 @@ export function AppShell({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "inline-flex items-center gap-2 border-b-2 px-3 py-2 text-sm font-semibold transition-colors",
+                      "inline-flex items-center gap-2 rounded-[var(--radius-md)] border px-3 py-2 text-sm font-semibold transition-colors",
                       isActive
-                        ? "border-[var(--tng-orange)] text-[var(--text)]"
-                        : "border-transparent text-[var(--muted)] hover:text-[var(--muted-strong)]",
+                        ? "border-[var(--line-strong)] bg-[var(--surface-subtle)] text-[var(--text)]"
+                        : "border-transparent text-[var(--muted)] hover:border-[var(--line)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text)]",
                     )}
                   >
                     <Icon size={15} absoluteStrokeWidth />
@@ -73,7 +73,7 @@ export function AppShell({
               })}
             </nav>
 
-            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--muted)]">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--muted-strong)]">
               <span className="mono">seed demo-core-v1</span>
               <span>Decisioning remains deterministic. Human override stays visible.</span>
             </div>

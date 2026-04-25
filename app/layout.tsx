@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Instrument_Sans } from "next/font/google";
+import { IBM_Plex_Mono, Public_Sans } from "next/font/google";
 
 import "./globals.css";
 
-const instrumentSans = Instrument_Sans({
+const publicSans = Public_Sans({
   subsets: ["latin"],
-  variable: "--font-instrument-sans",
+  variable: "--font-public-sans",
+  display: "swap",
 });
 
 const plexMono = IBM_Plex_Mono({
@@ -23,7 +24,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${instrumentSans.variable} ${plexMono.variable}`}>
+    <html lang="en" className={`${publicSans.variable} ${plexMono.variable}`}>
       <body>{children}</body>
     </html>
   );

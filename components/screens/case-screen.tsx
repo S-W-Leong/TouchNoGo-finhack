@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import {
+  CheckCheck,
   FileText,
   Files,
+  MessageCircleReply,
   Lock,
   MessageSquareShare,
   Network,
@@ -28,9 +31,110 @@ function formatLabel(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function CaseScreen({ record }: { record: CaseRecord }) {
+export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
+  const router = useRouter();
+  const [record, setRecord] = useState(initialRecord);
   const [sheet, setSheet] = useState<SheetKind>(null);
+  const [reportContent, setReportContent] = useState(initialRecord.exportNote);
+  const [generatedExplanation, setGeneratedExplanation] = useState<string | null>(null);
+  const [generatedNote, setGeneratedNote] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const confidence = Math.round(record.recommendation.confidence * 100);
+
+  const mutateCase = async (url: string, payload?: unknown) => {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: payload ? { "Content-Type": "application/json" } : undefined,
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+
+    if (!response.ok) {
+      throw new Error(await response.text());
+    }
+
+    return response.json();
+  };
+
+  const handleApplyRecommended = () => {
+    startTransition(async () => {
+      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/action`, {
+        action: record.recommendation.action,
+        actor: "Fraud analyst",
+      });
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
+  };
+
+  const handleOverride = (option: CaseRecord["recommendation"]["humanOverrideOptions"][number]) => {
+    const overrideReason = window.prompt(`Why override to ${formatLabel(option)}?`);
+
+    if (!overrideReason) {
+      return;
+    }
+
+    startTransition(async () => {
+      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/override`, {
+        overrideAction: option,
+        overrideReason,
+        actor: "Fraud analyst",
+      });
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
+  };
+
+  const handleExportReport = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/report`, {
+        format: "MARKDOWN",
+      });
+      setReportContent(result.content);
+      setSheet("note");
+    });
+  };
+
+  const handleGenerateExplanation = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/generate-explanation`);
+      setGeneratedExplanation(result.explanation);
+      setSheet("evidence");
+    });
+  };
+
+  const handleDraftNote = () => {
+    startTransition(async () => {
+      const result = await mutateCase(`/api/cases/${record.caseId}/draft-note`);
+      setGeneratedNote(result.note);
+      setReportContent(result.note);
+      setSheet("note");
+    });
+  };
+
+  const handleSimulateReply = () => {
+    startTransition(async () => {
+      const formData = new FormData();
+      formData.set("MessageSid", `SIM-IN-${Date.now()}`);
+      formData.set("Body", "/tng-login");
+      formData.set("CaseId", record.caseId);
+      const response = await fetch("/api/webhooks/twilio/inbound", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      const refreshed = await fetch(`/api/cases/${record.caseId}`, { cache: "no-store" });
+      const nextRecord = await refreshed.json();
+      setRecord(nextRecord);
+      setReportContent(nextRecord.exportNote);
+      router.refresh();
+    });
+  };
 
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1.18fr)_360px]">
@@ -67,11 +171,11 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
               </button>
               <button
                 className="button-secondary"
-                onClick={() => setSheet("network")}
+                onClick={handleGenerateExplanation}
                 type="button"
               >
-                <Network size={14} absoluteStrokeWidth />
-                Risk network
+                <Files size={14} absoluteStrokeWidth />
+                Generate explanation
               </button>
             </div>
           }
@@ -344,7 +448,19 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
               <div className="mb-2">
                 <StatusBadge label={formatLabel(record.prompt.state)} tone={record.prompt.state} />
               </div>
-              <div className="text-sm">{record.prompt.messagePreview}</div>
+                <div className="text-sm">{record.prompt.messagePreview}</div>
+              {record.resolutionState === "PENDING_USER" ? (
+                <div className="mt-3">
+                  <button
+                    className="button-secondary w-full justify-between"
+                    onClick={handleSimulateReply}
+                    type="button"
+                  >
+                    <span>Simulate /tng-login reply</span>
+                    <MessageCircleReply size={14} absoluteStrokeWidth />
+                  </button>
+                </div>
+              ) : null}
             </div>
 
             <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] px-3 py-3">
@@ -356,6 +472,7 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
                   <button
                     key={option}
                     className="button-secondary justify-between"
+                    onClick={() => handleOverride(option)}
                     type="button"
                   >
                     <span>{formatLabel(option)}</span>
@@ -384,14 +501,26 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-1">
               <button
                 className="button-primary justify-between"
-                onClick={() => setSheet("note")}
+                onClick={handleApplyRecommended}
+                type="button"
+              >
+                <span>{isPending ? "Working..." : "Apply recommendation"}</span>
+                <CheckCheck size={14} absoluteStrokeWidth />
+              </button>
+              <button
+                className="button-secondary justify-between"
+                onClick={handleExportReport}
                 type="button"
               >
                 <span>Export note</span>
                 <FileText size={14} absoluteStrokeWidth />
               </button>
-              <button className="button-danger justify-between" type="button">
-                <span>Override action</span>
+              <button
+                className="button-danger justify-between"
+                onClick={handleDraftNote}
+                type="button"
+              >
+                <span>Draft note with AI</span>
                 <MessageSquareShare size={14} absoluteStrokeWidth />
               </button>
             </div>
@@ -429,6 +558,11 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
         title="Evidence pack"
         subtitle="Inspectable inputs behind the recommendation."
       >
+        {generatedExplanation ? (
+          <div className="mb-3 rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] p-3 text-sm">
+            {generatedExplanation}
+          </div>
+        ) : null}
         <div className="space-y-2">
           {record.evidenceItems.map((item) => (
             <div
@@ -478,7 +612,7 @@ export function CaseScreen({ record }: { record: CaseRecord }) {
       >
         <div className="rounded-[10px] border border-[var(--line)] bg-[var(--surface-subtle)] p-3">
           <pre className="whitespace-pre-wrap font-inherit text-sm leading-6">
-            {record.exportNote}
+            {generatedNote ?? reportContent}
           </pre>
         </div>
       </Sheet>

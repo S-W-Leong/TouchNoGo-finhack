@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   CirclePlus,
   Play,
@@ -98,19 +99,25 @@ function computeReplayRows(workspace: ControlsWorkspace, appliedRule: RuleDefini
 }
 
 export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) {
-  const initialRule = workspace.rules[0];
-  const [rules, setRules] = useState(workspace.rules.map(cloneRule));
+  const router = useRouter();
+  const [workspaceState, setWorkspaceState] = useState(workspace);
+  const initialRule = workspaceState.rules[0];
+  const [rules, setRules] = useState(workspaceState.rules.map(cloneRule));
   const [selectedRuleId, setSelectedRuleId] = useState(initialRule.ruleId);
   const [draftRule, setDraftRule] = useState(cloneRule(initialRule));
   const [appliedRule, setAppliedRule] = useState(cloneRule(initialRule));
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [replayedAt, setReplayedAt] = useState<string | null>(null);
+  const [serverReplay, setServerReplay] = useState(() => {
+    const initialReplay = simulateReplay(workspaceState, appliedRule.freezeThreshold);
+    return {
+      metrics: initialReplay,
+      scenarios: computeReplayRows(workspaceState, appliedRule),
+    };
+  });
 
-  const replay = simulateReplay(workspace, appliedRule.freezeThreshold);
-  const replayRows = useMemo(
-    () => computeReplayRows(workspace, appliedRule),
-    [appliedRule, workspace],
-  );
+  const replay = serverReplay.metrics;
+  const replayRows = useMemo(() => serverReplay.scenarios, [serverReplay]);
   const hasPendingChanges =
     JSON.stringify(draftRule) !== JSON.stringify(appliedRule);
 
@@ -137,17 +144,35 @@ export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) 
   };
 
   const saveDraft = () => {
-    setRules((currentRules) =>
-      currentRules.map((rule) =>
-        rule.ruleId === selectedRuleId ? cloneRule(draftRule) : rule,
-      ),
-    );
-    setSavedAt(formatTimeLabel(Date.now()));
+    startTransition(async () => {
+      const response = await fetch("/api/controls/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ruleId: selectedRuleId,
+          rule: draftRule,
+        }),
+      });
+      const nextWorkspace: ControlsWorkspace = await response.json();
+      setWorkspaceState(nextWorkspace);
+      setRules(nextWorkspace.rules.map(cloneRule));
+      setSavedAt(formatTimeLabel(Date.now()));
+      router.refresh();
+    });
   };
 
   const replayDraft = () => {
-    setAppliedRule(cloneRule(draftRule));
-    setReplayedAt(formatTimeLabel(Date.now()));
+    startTransition(async () => {
+      const response = await fetch("/api/controls/replay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rule: draftRule }),
+      });
+      const preview = await response.json();
+      setAppliedRule(cloneRule(draftRule));
+      setServerReplay(preview);
+      setReplayedAt(formatTimeLabel(Date.now()));
+    });
   };
 
   return (
@@ -397,7 +422,7 @@ export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) 
                             }
                             value={condition.variableName}
                           >
-                            {workspace.variableDefinitions.map((variable) => (
+                            {workspaceState.variableDefinitions.map((variable) => (
                               <option key={variable.name} value={variable.name}>
                                 :{variable.name}
                               </option>
@@ -479,7 +504,7 @@ export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) 
                       ...rule.conditions,
                       {
                         clauseId: `C-${rule.conditions.length + 10}`,
-                        variableName: workspace.variableDefinitions[0]?.name ?? "is_new_device",
+                        variableName: workspaceState.variableDefinitions[0]?.name ?? "is_new_device",
                         operator: "=",
                         value: "true",
                         hint: "New clause added in the workspace.",
@@ -560,7 +585,7 @@ export function ControlsScreen({ workspace }: { workspace: ControlsWorkspace }) 
                 </tr>
               </thead>
               <tbody>
-                {workspace.variableDefinitions.map((variable) => (
+                {workspaceState.variableDefinitions.map((variable) => (
                   <tr key={variable.name}>
                     <td>
                       <div className="mono text-sm">:{variable.name}</div>
