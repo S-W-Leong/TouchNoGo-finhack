@@ -42,11 +42,34 @@ This plan is successful when v1 can do all of this in one stable demo:
 7. export a case note
 8. replay one threshold or rule change in `/controls`
 
+## Compatibility Lock
+
+Use this exact compatibility baseline unless a later implementation step proves a concrete conflict:
+
+| Layer | Version choice | Why |
+|---|---|---|
+| Node.js | `20.19.x LTS` | satisfies current Next.js and Prisma minimums and stays on LTS |
+| Next.js | `15.x stable` | supported by Amplify Hosting compute |
+| React | `19.x` | required baseline for Next.js 15 |
+| React DOM | `19.x` | required baseline for Next.js 15 |
+| TypeScript | `5.4+` | satisfies Prisma's current minimum |
+| Tailwind CSS | `4.x` | current official Next.js guide uses Tailwind v4-style install |
+| `@tailwindcss/postcss` | `4.x` | required by Tailwind's current Next.js guide |
+| Twilio helper library | `5.13.1` pinned | current latest stable GitHub release as of April 25, 2026 |
+| Alibaba integration | raw HTTP `fetch` to OpenAI-compatible endpoint | avoids SDK version drift entirely |
+| Database for v1 | seeded JSON first, optional Postgres later | fastest path to a stable demo |
+
+If a real database is needed in v1.1:
+
+- PostgreSQL `16` or `17`
+- Prisma on a version that matches the current Node `20.19.x` baseline
+- keep `prisma` and `@prisma/client` on the exact same version
+
 ## Assumptions
 
 - assuming we are building a polished prototype, not a production banking platform, so I have to find out - I should not assume: v1 can run on synthetic seeded data plus a small Postgres database
 - assuming the team wants the fastest credible web stack, so I have to find out - I should not assume: Next.js full-stack TypeScript is acceptable
-- assuming the team wants inbound webhooks and a real container deployment path, so I have to find out - I should not assume: AWS ECS Fargate is the right default over a simpler static or serverless deployment
+- assuming the team wants the simplest deploy handoff for the hackathon, so I have to find out - I should not assume: Amplify-first with optional Docker fallback is the right default
 - assuming the first outbound WhatsApp message may happen outside an active user session, so I have to find out - I should not assume: the first prompt should be treated as a WhatsApp template message, not freeform
 
 ## Not In Scope
@@ -69,7 +92,8 @@ This plan is successful when v1 can do all of this in one stable demo:
 - `TypeScript`
 - `Tailwind CSS`
 - `shadcn/ui` only for primitives, not for product thinking
-- `Prisma` + `PostgreSQL`
+- seeded JSON data for v1
+- optional `Prisma` + `PostgreSQL` for v1.1
 - `Zod` for request and config validation
 
 ### Integrations
@@ -79,41 +103,35 @@ This plan is successful when v1 can do all of this in one stable demo:
 
 ### Infra
 
-- one Docker image
-- `AWS ECS Fargate` service behind `Application Load Balancer`
-- `Amazon RDS PostgreSQL`
-- `Amazon ECR` for image storage
-- `AWS Secrets Manager` for secrets
-- `Amazon CloudWatch` for logs
-- `EventBridge Scheduler` for periodic expiry sweeps and demo reset jobs
+- primary deploy target: `AWS Amplify Hosting` for Next.js SSR
+- optional backup artifact: one Docker image
+- optional database: `Amazon RDS PostgreSQL`
+- `AWS Secrets Manager` or Amplify env management for secrets
+- `Amazon CloudWatch` for logs where applicable
+- scheduled sweep can be deferred in v1 or handled by manual admin action
 
 ### Why this stack
 
 - one codebase handles UI, API, webhook endpoints, and server-side rendering
-- one Docker image keeps local dev and AWS deployment aligned
-- Fargate avoids managing EC2 while still handling inbound webhooks and background jobs cleanly
-- Postgres is boring and correct for seeded relational fraud case data
+- Amplify can host current Next.js SSR apps without us managing the container runtime directly
+- Docker stays available as a portability fallback, not a hard deployment dependency
+- seeded JSON avoids unnecessary database ops for the hackathon build
 
 ## Deployment Shape
 
 ```text
 Browser
   ->
-ALB (HTTPS)
+Amplify Hosting compute
   ->
-ECS Fargate service
-  ->
-Next.js app container
-  |-> Postgres (RDS)
+Next.js app
   |-> Alibaba Model Studio API
   |-> Twilio REST API
-  <- Twilio webhooks through ALB
+  <- Twilio webhooks through app routes
 
-EventBridge Scheduler
-  ->
-scheduled ECS task or internal protected route
-  ->
-expire prompts / close stale pending-user cases / reset seed demo state
+Optional later:
+  |-> Postgres (RDS)
+  |-> Docker/App Runner/ECS deployment path
 ```
 
 ## Docker Plan
@@ -122,8 +140,8 @@ expire prompts / close stale pending-user cases / reset seed demo state
 
 - `Dockerfile`
 - `.dockerignore`
-- `docker-compose.yml` for local app + postgres
-- `scripts/start.sh` or `pnpm prisma migrate deploy && pnpm start`
+- optional `docker-compose.yml` for local app + postgres
+- startup command should work without a database in seeded mode
 
 ### Container behavior
 
@@ -133,13 +151,11 @@ expire prompts / close stale pending-user cases / reset seed demo state
 - health endpoint `GET /api/healthz`
 - startup must fail fast if required env vars are missing
 
-### AWS runtime shape
+### Runtime note
 
-- ALB listens on `443`
-- target group health check hits `/api/healthz`
-- ECS task uses `awsvpc` network mode
-- target group target type is `ip`
-- at least 2 subnets across AZs
+If Shi Wei deploys with Amplify, Docker is not required.
+
+If Shi Wei wants Docker later, the container should still run with plain `next start` so it can move to App Runner, ECS, or any other Node-compatible platform without app rewrites.
 
 ## High-Level Architecture
 
@@ -349,6 +365,7 @@ Responsibility:
 - call Alibaba Cloud Model Studio
 - produce grounded explanation, missing-data prompts, and case note draft
 - never own the deterministic score or final irreversible action
+- use plain HTTP calls to the OpenAI-compatible endpoint, not a provider SDK
 
 ### `AuditService`
 
@@ -526,7 +543,7 @@ Create one provider adapter:
 
 Responsibilities:
 
-- initialize the Alibaba client
+- call the OpenAI-compatible HTTP endpoint directly with `fetch`
 - call `qwen3.6-flash`
 - normalize output into app-safe shapes
 - isolate provider-specific request and response formats from the rest of the app
@@ -906,6 +923,8 @@ export interface ReplayDelta {
 
 ### Core tables
 
+For v1 seeded mode, these can exist as TypeScript objects or JSON files first:
+
 - `cases`
 - `case_entities`
 - `entity_edges`
@@ -927,6 +946,7 @@ export interface ReplayDelta {
 
 ### Important relational notes
 
+- do not force a database before the demo needs one
 - `case_prompts.case_id` is one-to-many to support resend or retry history
 - `prompt_events` stores Twilio delivery transitions separately from the current prompt row
 - `llm_runs` stores request purpose, model, token usage, latency, and linked case
@@ -946,7 +966,7 @@ DATABASE_URL=
 ALIBABA_MODELSTUDIO_API_KEY=
 ALIBABA_MODEL=qwen3.6-flash
 ALIBABA_API_STYLE=openai
-ALIBABA_BASE_URL=
+ALIBABA_BASE_URL=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
 
 TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
@@ -963,7 +983,6 @@ FEATURE_ENABLE_AI_EXPLANATION=true
 FEATURE_ENABLE_WHATSAPP_PROMPT=true
 FEATURE_ENABLE_CONTROLS_REPLAY=true
 SEED_MODE=true
-DEMO_RESET_CRON=*/30 * * * *
 ```
 
 ### Runtime config rules
