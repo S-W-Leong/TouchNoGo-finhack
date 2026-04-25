@@ -23,7 +23,7 @@ import { Sheet } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/ui/status-badge";
 import type { CaseRecord } from "@/lib/domain/schema";
 
-type SheetKind = "score" | "evidence" | "policy" | "note" | null;
+type SheetKind = "score" | "evidence" | "policy" | "note" | "network" | null;
 type PendingAction =
   | "apply"
   | "override"
@@ -213,101 +213,6 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
     }
   };
 
-  const mutateCase = async (url: string, payload?: unknown) => {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: payload ? { "Content-Type": "application/json" } : undefined,
-      body: payload ? JSON.stringify(payload) : undefined,
-    });
-
-    if (!response.ok) {
-      throw new Error(await response.text());
-    }
-
-    return response.json();
-  };
-
-  const handleApplyRecommended = () => {
-    startTransition(async () => {
-      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/action`, {
-        action: record.recommendation.action,
-        actor: "Fraud analyst",
-      });
-      setRecord(nextRecord);
-      setReportContent(nextRecord.exportNote);
-      router.refresh();
-    });
-  };
-
-  const handleOverride = (option: CaseRecord["recommendation"]["humanOverrideOptions"][number]) => {
-    const overrideReason = window.prompt(`Why override to ${formatLabel(option)}?`);
-
-    if (!overrideReason) {
-      return;
-    }
-
-    startTransition(async () => {
-      const nextRecord = await mutateCase(`/api/cases/${record.caseId}/override`, {
-        overrideAction: option,
-        overrideReason,
-        actor: "Fraud analyst",
-      });
-      setRecord(nextRecord);
-      setReportContent(nextRecord.exportNote);
-      router.refresh();
-    });
-  };
-
-  const handleExportReport = () => {
-    startTransition(async () => {
-      const result = await mutateCase(`/api/cases/${record.caseId}/report`, {
-        format: "MARKDOWN",
-      });
-      setReportContent(result.content);
-      setSheet("note");
-    });
-  };
-
-  const handleGenerateExplanation = () => {
-    startTransition(async () => {
-      const result = await mutateCase(`/api/cases/${record.caseId}/generate-explanation`);
-      setGeneratedExplanation(result.explanation);
-      setSheet("evidence");
-    });
-  };
-
-  const handleDraftNote = () => {
-    startTransition(async () => {
-      const result = await mutateCase(`/api/cases/${record.caseId}/draft-note`);
-      setGeneratedNote(result.note);
-      setReportContent(result.note);
-      setSheet("note");
-    });
-  };
-
-  const handleSimulateReply = () => {
-    startTransition(async () => {
-      const formData = new FormData();
-      formData.set("MessageSid", `SIM-IN-${Date.now()}`);
-      formData.set("Body", "/tng-login");
-      formData.set("CaseId", record.caseId);
-      const response = await fetch("/api/webhooks/twilio/inbound", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      const refreshed = await fetch(`/api/cases/${record.caseId}`, { cache: "no-store" });
-      const nextRecord = await refreshed.json();
-      setRecord(nextRecord);
-      setReportContent(nextRecord.exportNote);
-      router.refresh();
-    });
-  };
-
   return (
     <div className="grid gap-3 xl:grid-cols-[minmax(0,1.18fr)_360px]">
       <div className="flex min-w-0 flex-col gap-3">
@@ -343,6 +248,15 @@ export function CaseScreen({ record: initialRecord }: { record: CaseRecord }) {
               >
                 <Lock size={14} absoluteStrokeWidth />
                 Policy basis
+              </button>
+              <button
+                className="button-secondary"
+                onClick={() => setSheet("network")}
+                type="button"
+                disabled={pendingAction !== null}
+              >
+                <Network size={14} absoluteStrokeWidth />
+                Risk network
               </button>
               <button
                 className="button-secondary"

@@ -32,8 +32,13 @@ export function Sheet({
         onClick={onClose}
         type="button"
       />
-      <div className={variant === "modal" ? "sheet-modal-panel" : "sheet-panel"}>
-        <div className={`sheet-card ${variant === "modal" ? "sheet-card-modal" : ""} p-5 md:p-6`}>
+      <div
+        className={clsx(
+          variant === "modal" ? "sheet-modal-panel" : "sheet-panel",
+          variant === "side" && wide && "sheet-panel-wide",
+        )}
+      >
+        <div className={clsx("sheet-card p-5 md:p-6", variant === "modal" && "sheet-card-modal")}>
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow mb-1">Detail panel</p>
