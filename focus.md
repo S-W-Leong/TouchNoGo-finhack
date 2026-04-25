@@ -2,15 +2,16 @@
 
 ## Core Decision
 
-Build the `AI-assisted analyst workspace for account takeover detection, investigation, and intervention`.
+Build the `ATO detection-to-action orchestration system`.
 
 Do not build the whole fraud ops platform.
 Do not build a full no-code rules engine first.
 Do not build a generic alert dashboard with AI sprinkled on top.
+Do not stop at detection only.
 
 The wedge is:
 
-`detect -> investigate -> recommend -> human decides -> action -> export note -> replay control`
+`detect -> action -> prompt -> resolved`
 
 The hero case is now:
 
@@ -20,8 +21,26 @@ The secondary consequence path is:
 
 - `unauthorized transaction after takeover`
 
-The spike is the trigger, not the product.
+Detection is necessary, but it is not the differentiator.
+The differentiator is automating the action layer after risky behavior is detected.
 User behavior is the core signal layer.
+
+## Final Decision
+
+The actual product flow is:
+
+`USER DATA -> DETECTION -> ACTION -> PROMPT -> RESOLVED`
+
+With this meaning:
+
+- `USER DATA`: login events, device changes, account changes, transaction attempts, success vs failure
+- `DETECTION`: scripted detection logic, user scoring, result classification
+- `ACTION`: automatic freeze, review routing, `STUDY` tag, case creation
+- `PROMPT`: notify the user to reverify through app login, MFA, and face verification
+- `RESOLVED`: reactivate, keep blocked, or report into manager summaries
+
+This means the app is not just a fraud analyst dashboard.
+It is a fraud action orchestration product.
 
 ## Focus Lock
 
@@ -36,8 +55,10 @@ The v1 focus is:
 - three pages only
 - three routes only: `/queue`, `/cases/:caseId`, `/controls`
 - deterministic score and policy logic
-- AI for explanation and recommendation
-- human action and override
+- AI for explanation, recommendation, and report generation
+- automated action for the high-confidence path
+- user re-verification prompt flow
+- resolved outcome tracking
 - replay for one threshold, action-band, or draft-rule change
 
 ## App Shape
@@ -52,7 +73,7 @@ Purpose:
 
 - show the spike
 - rank suspicious accounts
-- route analyst into the hero case
+- show which detections are about to trigger automated action
 
 Shows:
 
@@ -61,6 +82,7 @@ Shows:
 - behavior score
 - reason chips
 - current control state
+- proposed automatic action
 
 ### Page 2 - Case Investigation Workspace
 
@@ -70,8 +92,9 @@ Route:
 
 Purpose:
 
-- help the analyst understand what happened
-- help the analyst decide what action to take
+- help the team understand what happened
+- show why an automated action fired or is about to fire
+- let the team override only when needed
 
 Shows:
 
@@ -84,7 +107,9 @@ Shows:
 - suspicious actions attempted vs succeeded
 - AI recommendation
 - policy citations
-- action buttons
+- action execution state
+- prompt status
+- override buttons
 - export note or ticket handoff
 
 ### Page 3 - Controls Lab / Replay
@@ -95,13 +120,15 @@ Route:
 
 Purpose:
 
-- let analysts review editable variables, draft one readable control, and replay it safely before rollout
+- let the team build the rule, action, and prompt logic that powers the automation
 
 Shows:
 
 - variable registry
 - current threshold or action band
 - readable draft rule
+- automated action mapping
+- prompt template and re-verification steps
 - before / after replay results
 - more bad cases caught
 - more good users delayed
@@ -116,11 +143,13 @@ Shows:
   ->
 [/cases/CASE-ATO-001: review timeline, score, evidence]
   ->
-[/cases/CASE-ATO-001: AI recommendation + policy citations]
+[/cases/CASE-ATO-001: auto action + policy citations]
   ->
-[/cases/CASE-ATO-001: human approves or overrides action]
+[/cases/CASE-ATO-001: freeze or review tag applied]
   ->
-[/cases/CASE-ATO-001: export note / ticket handoff]
+[/cases/CASE-ATO-001: WhatsApp reverify prompt sent]
+  ->
+[/cases/CASE-ATO-001: resolved as reactivated or blocked]
   ->
 [/controls: review variables, draft rule, replay]
   ->
@@ -167,8 +196,10 @@ Shows:
 
 ```text
 +----------------------------------------------------------------------------------+
-| ATO SPIKE: suspicious account behavior up 4.2x in last 30 min                   |
-| 18 new-device logins | 9 PIN resets | 6 high-value transfer attempts            |
+| ATO precursor cluster 4.2x above same-hour baseline                             |
+| 21 candidate accounts vs expected 5 in last 30 min                              |
+| 18 new-device logins | 9 PIN resets in 24h | 6 high-value transfer attempts     |
+| Segment: MY app logins -> transfer-enabled wallets                               |
 +----------------------------------------------------------------------------------+
 | Route: /queue                                                                    |
 +----------------------------------------------------------------------------------+
@@ -195,7 +226,7 @@ Shows:
 | Left Rail                | Center                                         | Right Rail               |
 | - case list              | USER TIMELINE                                  | RECOMMENDED ACTION       |
 | - rank                   | 01:58 login from new device                    | FREEZE_ACCOUNT           |
-| - score                  | 02:01 PIN reset                                | Confidence: 0.84         |
+| - score -> open breakdown | 02:01 PIN reset                               | Confidence: 0.84         |
 | - reason chips           | 02:04 beneficiary added                        |                          |
 |                          | 02:06 MYR 8,500 transfer attempted             | WHY                      |
 |                          | 02:07 second transfer blocked                  | - new device             |
@@ -212,6 +243,12 @@ Shows:
 |                          | MISSING DATA                                   | [STEP_UP_VERIFY]         |
 |                          | - customer contact confirmation not yet done   | [FREEZE_ACCOUNT]         |
 |                          |                                                | [ESCALATE]               |
+|                          | SCORE BREAKDOWN                                | [Open policy drawer]     |
+|                          | +20 new device                                 | [Open evidence drawer]   |
+|                          | +10 late-night login                           |                          |
+|                          | +15 PIN reset in 24h                           | AUDIT OUTCOME            |
+|                          | +18 amount 8.7x baseline                       | transfer blocked before  |
+|                          | +15 linked prior case                          | completion               |
 |                          | LINKED ACCOUNTS / DEVICES                      |                          |
 |                          | - linked device to prior case                  | [Export Note]            |
 +--------------------------+------------------------------------------------+--------------------------+
@@ -331,7 +368,7 @@ Pitch it as:
 
 ### One-line pitch
 
-`TNG RiskOps Agent turns suspicious user behavior into evidence-backed account takeover decisions, analyst actions, and replayable control tradeoffs before unauthorized money movement succeeds.`
+`TNG RiskOps Agent detects likely account takeover, auto-applies the right control, prompts the user to reverify, and resolves the account before unauthorized money movement succeeds.`
 
 ### Primary user
 
@@ -345,7 +382,7 @@ Pitch it as:
 
 ### Core job to be done
 
-Help an analyst understand suspicious user behavior, decide whether the account is taken over, and choose the next control before more damage happens.
+Turn suspicious user behavior into automated account action, user re-verification, and clear resolution before more damage happens.
 
 ## What To Build
 
@@ -357,7 +394,7 @@ Purpose:
 
 - show the highest-priority suspicious accounts fast
 - make the ATO spike visible
-- route the analyst into one hero case
+- show which detections will trigger automated action next
 
 Must show:
 
@@ -366,6 +403,8 @@ Must show:
 - reason chips
 - current control state
 - one spike banner or anomaly card
+- numerator and baseline denominator for the spike
+- proposed action band result, not limited to: review, freeze, `STUDY`
 
 Key interactions:
 
@@ -383,46 +422,55 @@ What not to do:
 
 Purpose:
 
-- put user behavior, evidence, policy, AI reasoning, and action in one place
+- put user behavior, evidence, policy, automated action, prompt status, and final outcome in one place
 
 This is the core page.
 
 Layout:
 
 - top summary strip: masked user snapshot, behavior risk score, current controls
-- left rail: ranked cases, reason chips, analyst status
+- left rail: ranked cases, reason chips, action state
 - center: user timeline, account changes, device changes, linked accounts, attempted vs succeeded actions, facts, AI inferences, missing-data requests
-- right rail: recommended action, policy or compliance lines, confidence, human controls, export note or ticket handoff
+- right rail: automated action, policy or compliance lines, prompt status, human override, final outcome
 
-Must answer five questions instantly:
+Must answer these questions instantly:
 
 1. What behavior happened?
 2. Did suspicious actions succeed?
 3. What evidence did the system use?
-4. What action does it recommend and why?
-5. What can the human override?
+4. What automatic action fired and why?
+5. What prompt was sent to the user?
+6. Which policy or rule allowed this action?
+7. Was the bad money movement prevented before completion?
+8. Can a human override this?
+9. Is the account now reactivated, blocked, or still pending re-verification?
 
 Key interactions:
 
 - inspect linked accounts and devices
+- click the score to open score breakdown, evidence IDs, and triggered scoring rules
 - expand evidence items
+- open policy drawer from the recommendation rail
 - distinguish `FACT` vs `INFERENCE` vs `POLICY`
 - see current control state, not limited to: no action, review, freeze pending
-- approve `ALLOW`, `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, or `ESCALATE`
-- override recommendation with mandatory human reason
+- show if the system auto-applied `REVIEW`, `FREEZE_ACCOUNT`, or `STUDY`
+- allow human override with mandatory reason
+- show prompt sent status and re-verification result
 - export case note or ticket handoff
 
 ### 3. Controls Lab / Replay
 
 Purpose:
 
-- prove that behavior thresholds or readable draft controls can be tested safely before rollout
+- prove that behavior thresholds, automated actions, and prompt flows can be tested safely before rollout
 
 Must show:
 
 - current action band or threshold
 - variable registry
 - readable draft rule
+- action mapping
+- prompt mapping
 - fixed seeded scenarios
 - bad cases caught
 - good users delayed
@@ -433,6 +481,8 @@ Key interactions:
 
 - edit one threshold, action band, or whitelisted variable
 - draft one readable control
+- map a score band to an automatic action
+- map an action to a user prompt
 - rerun the replay
 - compare before vs after
 - keep the result as draft
@@ -456,12 +506,15 @@ What not to do:
 2. Analyst opens the highest-risk account.
 3. Workspace shows login time, device change, account changes, linked accounts, and suspicious transaction attempts.
 4. Deterministic behavior score and feature drivers are shown.
-5. AI summarizes the behavior pattern and recommends the next action.
-6. Policy and audit layer maps that action to explicit control and review requirements.
-7. Analyst chooses `STEP_UP_VERIFICATION`, `FREEZE_ACCOUNT`, or `ESCALATE`.
-8. System drafts and exports the case note or ticket handoff.
-9. Analyst opens Controls Lab and tightens one threshold, action band, or draft rule.
-10. Replay shows the tradeoff.
+5. Rule engine maps the score and evidence into an automatic action.
+6. System auto-applies `REVIEW`, `FREEZE_ACCOUNT`, or `STUDY` based on the action ladder.
+7. Policy layer shows exactly why that action was allowed.
+8. System sends the user a re-verification prompt by WhatsApp and in-app notification.
+9. User re-verifies through relogin, MFA, and face verification.
+10. System resolves the case as `REACTIVATED`, `BLOCKED`, or `ESCALATED`.
+11. Manager report and case outcome are generated.
+12. Analyst opens Controls Lab and tightens one threshold, action band, or draft rule.
+13. Replay shows the tradeoff.
 
 ### Backup flow
 
@@ -479,17 +532,19 @@ Do not build more than one backup case.
 - one hero ATO case
 - behavior timeline
 - deterministic behavior score with visible drivers
-- AI recommendation with evidence references
-- human action and override reason
+- automated action with evidence references
+- human override reason
+- WhatsApp re-verification prompt
+- resolved state: `REACTIVATED` or `BLOCKED`
 - masked PII
-- case note or ticket export
+- case note or manager report
 - simple Controls Lab replay
 
 ### V1.5 only if v1 is stable
 
 - one AI-generated draft rule from reviewed anomalies
 - one backup case
-- one thin integration card for Zendesk or internal case tooling
+- one natural-language manager query or report surface
 
 ## Modules
 
@@ -566,12 +621,13 @@ Responsibility:
 - evaluate which control policies are triggered
 - map evidence to policy or control citations
 - constrain which actions are allowed
+- execute automatic action when the rule and score band are satisfied
 
 Important rule:
 
 - no severe action without policy mapping
 - no auto-approve when policy is missing
-- human approval remains visible for severe controls
+- human override remains visible for severe controls
 
 Deterministic:
 
@@ -615,6 +671,34 @@ Guardrails:
 - AI may suggest the rule from 10 reviewed anomalies
 - no live deployment in v1
 - no arbitrary user code
+
+### Rule-building process
+
+Keep rule building explicit.
+
+The process is:
+
+1. choose the behavior variables
+2. define the condition logic
+3. assign the action
+4. assign the user prompt
+5. assign the resolved-state path
+6. replay on fixed scenarios
+7. keep as draft or promote
+
+Example:
+
+```text
+IF
+  :is_new_device = true and
+  :pin_reset_24h = true and
+  :amount_ratio_30d >= 5
+THEN
+  action = FREEZE_ACCOUNT
+  prompt = WHATSAPP_REVERIFY
+  resolved_if_pass = REACTIVATE
+  resolved_if_fail = KEEP_BLOCKED
+```
 
 ### 5. Behavior Score Engine
 
@@ -695,6 +779,42 @@ What we can honestly say:
 - a production spike engine would segment by campaign, region, day of week, and feature cohort
 - the spike helps prioritize the queue; it does not decide the final case action
 
+Concrete example:
+
+- numerator: `21` candidate accounts in the last `30 minutes`
+- denominator: expected `5` candidate accounts for the same segment and same-hour window
+- multiplier: `21 / 5 = 4.2x`
+
+Candidate-account logic:
+
+- account enters the spike cluster only if it matches at least `2` precursor signals
+- example precursor signals:
+  - new-device login
+  - PIN reset within 24h
+  - beneficiary added within 24h
+  - high-value transfer attempt above user baseline
+
+This is why `18 new-device logins` alone is not the alert.
+The alert is the clustered rise in risky precursor combinations.
+
+### Why this still counts as proactive detection
+
+The build is not just fraud-ops automation after the fact.
+
+The proactive detection layer is:
+
+- queue-level spike detection for ATO precursor clusters
+- deterministic per-account ATO scoring
+- action banding before transfer completion
+- analyst escalation before the suspicious movement succeeds
+
+Judge-safe framing:
+
+- we are not claiming a production ML model
+- we are building a deterministic prototype that detects likely ATO precursor patterns early enough to trigger preventive action
+- the workspace makes that detection operationally usable
+- the automated freeze and re-verification flow is the main product value, not just the score
+
 ### 6. AI Investigation Copilot
 
 Responsibility:
@@ -721,10 +841,13 @@ Responsibility:
 - show action options
 - show current recommendation
 - require human confirmation or override reason
+- show exactly which policy IDs, evidence IDs, and score drivers support the recommendation
 
 Allowed actions for v1:
 
 - `ALLOW`
+- `REVIEW`
+- `STUDY`
 - `STEP_UP_VERIFICATION`
 - `FREEZE_ACCOUNT`
 - `ESCALATE`
@@ -732,6 +855,69 @@ Allowed actions for v1:
 Hackathon note:
 
 - keep device block and IP block as visible control state or future action, not primary v1 buttons
+
+### Evidence-backed decision and policy mapping
+
+The core interaction should support:
+
+- click score -> open score breakdown
+- click score component -> open supporting evidence item
+- click recommendation -> open policy drawer
+- click policy ID -> show why this policy was triggered
+
+For each severe recommendation, the UI should show:
+
+- score total
+- score components
+- evidence IDs
+- policy IDs
+- recommended action
+- allowed override options
+- final human decision
+- final case outcome
+
+Example chain:
+
+```text
+Score 92
+  -> +20 new device
+  -> +15 PIN reset in 24h
+  -> +18 amount 8.7x baseline
+  -> EV-101, EV-102, EV-104
+  -> POL-ATO-03 allows FREEZE_ACCOUNT
+  -> system auto-applies FREEZE_ACCOUNT
+  -> system sends WHATSAPP_REVERIFY
+  -> transfer blocked before completion
+```
+
+### Prompt and resolution engine
+
+After action, the system should continue automatically.
+
+Prompt states:
+
+- `PENDING_SEND`
+- `SENT`
+- `DELIVERED`
+- `REVERIFY_STARTED`
+- `REVERIFY_PASSED`
+- `REVERIFY_FAILED`
+- `EXPIRED`
+
+Resolved states:
+
+- `REACTIVATED`
+- `BLOCKED`
+- `ESCALATED`
+- `PENDING_USER`
+
+v1 prompt flow:
+
+- send WhatsApp notification
+- ask user to relogin
+- require MFA
+- require face verification
+- resolve automatically if checks pass
 
 ### 8. Report Draft And Export
 
@@ -749,6 +935,8 @@ Must include:
 - policy or control citations
 - final human action
 - human approver or overrider
+- final case outcome, not limited to: transfer blocked, transfer held, step-up requested
+- prompt delivery and re-verification result
 - audit timestamp
 
 ### 9. Replay Engine
@@ -779,7 +967,9 @@ Must capture:
 - case opened
 - evidence added
 - recommendation generated
-- action approved
+- automatic action applied
+- prompt sent
+- re-verification completed
 - override reason
 - note exported
 - replay run
@@ -992,6 +1182,7 @@ On load:
 - show seeded cases
 - highest-risk ATO case is first
 - spike banner is visible
+- show spike numerator, denominator, segment, and time window
 
 On click:
 
@@ -1013,6 +1204,8 @@ On load:
 - show linked accounts or devices
 - show attempted vs succeeded suspicious actions
 - show recommendation + policy citations
+- show clickable score breakdown
+- show clickable evidence IDs and policy IDs
 
 On analyst action:
 
@@ -1020,6 +1213,7 @@ On analyst action:
 - require override reason if analyst disagrees with AI
 - write audit event
 - update control state
+- record whether suspicious movement was prevented before completion
 
 On export:
 
@@ -1055,7 +1249,8 @@ For v1, the product should visibly support:
 
 - masked PII by default
 - audit trail
-- human approval for severe actions
+- policy visibility for severe actions
+- human override for severe actions
 - encryption-at-rest callout in the architecture slide
 - simple export or handoff to ticketing, not necessarily live Zendesk integration
 
@@ -1092,6 +1287,7 @@ Do not build these in the hackathon:
 - production event streaming
 - full customer recovery journey
 - separate graph database
+- Telegram scraping or threat-intel ingestion as a core feature
 - every fraud type at once
 - every compliance workflow at once
 
@@ -1103,9 +1299,10 @@ This build uses AI in the right place:
 
 - behavior explanation
 - evidence synthesis
-- action recommendation
+- report generation
 - policy explanation
 - note drafting
+- optional manager query and reporting assist
 
 This avoids the mistake of using LLMs as fake deterministic scoring engines.
 
@@ -1142,10 +1339,10 @@ The impact story is clear:
 
 The story is naturally demoable:
 
-- queue
-- case
+- detect
 - action
-- note
+- prompt
+- resolved
 - replay
 
 That is one straight line.
@@ -1158,11 +1355,13 @@ Build in this order and stop when the previous slice is weak.
 2. Queue with reason chips and spike banner
 3. Case workspace with behavior timeline and feature drivers
 4. Deterministic score and action ladder
-5. Human override, masked PII, and audit log
-6. Note export or ticket handoff
-7. Controls Lab replay
-8. Backup unauthorized-transaction case
-9. AI draft-rule suggestion only if everything above is stable
+5. Automated freeze or review execution
+6. WhatsApp re-verification prompt flow
+7. Resolved outcome tracking and audit log
+8. Note export or manager report
+9. Controls Lab replay
+10. Backup unauthorized-transaction case
+11. AI draft-rule suggestion only if everything above is stable
 
 ## Minimum Viable Demo Checklist
 
@@ -1171,8 +1370,11 @@ Build in this order and stop when the previous slice is weak.
 - behavior score shows visible drivers
 - every recommendation cites evidence IDs
 - every recommendation cites policy IDs
-- human can approve or override
+- automated action visibly fires
+- human can override
 - override requires a reason
+- WhatsApp prompt status is visible
+- resolved outcome is visible
 - masked PII is visible
 - note export works
 - replay is deterministic by seed
@@ -1184,19 +1386,21 @@ Build in this order and stop when the previous slice is weak.
 2. Open the top risky account case.
 3. Show the user behavior timeline, account changes, and suspicious action attempts.
 4. Show the deterministic behavior score and feature drivers.
-5. Show AI explanation and recommended `FREEZE_ACCOUNT` or `STEP_UP_VERIFICATION`.
-6. Approve or override as analyst.
-7. Export the case note or ticket handoff.
-8. Open Controls Lab.
-9. Tighten one threshold, action band, or readable draft rule.
-10. Replay and show the tradeoff.
+5. Show automatic `FREEZE_ACCOUNT` or `REVIEW` triggered by rule and policy.
+6. Show WhatsApp re-verification prompt sent to the user.
+7. Show resolved state as `REACTIVATED` or `BLOCKED`.
+8. Export the case note or manager report.
+9. Open Controls Lab.
+10. Tighten one threshold, action band, or readable draft rule.
+11. Replay and show the tradeoff.
 
 ## If Time Remains
 
 Only after the core demo is stable:
 
 - add one backup case family
-- add one thin integration card for ticketing
+- add one thin manager report or query surface
+- add one simple natural-language query, not limited to: `show all rules used for fraud score >= 90` or `which frozen cases never reverified`
 - add one AI-generated draft rule suggestion in Controls Lab
 
 ## Final Call
