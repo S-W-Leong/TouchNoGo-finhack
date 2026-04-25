@@ -160,9 +160,9 @@ Shows:
 +----------------------------------------------------------------------------------+
 | Search [__________]      Filter: ATO       Queue: PREVENTION                     |
 +----------------------------------------------------------------------------------+
-| Rank | User        | Score | Reason Chips                    | Control State     |
-| 1    | U*** H****  | 92    | 2am login, new device, PIN reset| No freeze         |
-| 2    | N*** R****  | 87    | linked acct, new payee, top-up  | Review pending    |
+| Rank | User        | Score | Reason Chips                     | Control State     |
+| 1    | U*** H****  | 92    | 2am login, new device, PIN reset | No freeze         |
+| 2    | N*** R****  | 87    | linked acct, new payee, top-up   | Review pending    |
 | 3    | S*** A****  | 76    | password reset, high amount      | None              |
 | 4    | M*** Z****  | 71    | new device, repeat failure       | None              |
 +----------------------------------------------------------------------------------+
@@ -180,25 +180,25 @@ Shows:
 | Left Rail                | Center                                         | Right Rail               |
 | - case list              | USER TIMELINE                                  | RECOMMENDED ACTION       |
 | - rank                   | 01:58 login from new device                    | FREEZE_ACCOUNT           |
-| - score                  | 02:01 PIN reset                               | Confidence: 0.84         |
-| - reason chips           | 02:04 beneficiary added                       |                          |
-|                          | 02:06 MYR 8,500 transfer attempted            | WHY                      |
-|                          | 02:07 second transfer blocked                 | - new device             |
+| - score                  | 02:01 PIN reset                                | Confidence: 0.84         |
+| - reason chips           | 02:04 beneficiary added                        |                          |
+|                          | 02:06 MYR 8,500 transfer attempted             | WHY                      |
+|                          | 02:07 second transfer blocked                  | - new device             |
 |                          |                                                | - late-night login       |
 |                          | FACTS                                          | - PIN reset before tx    |
-|                          | - device age: 2 hours                         | - 8.7x above baseline    |
-|                          | - amount: 8.7x baseline                       |                          |
-|                          | - linked device in prior reviewed case        | POLICY / CONTROL         |
+|                          | - device age: 2 hours                          | - 8.7x above baseline    |
+|                          | - amount: 8.7x baseline                        |                          |
+|                          | - linked device in prior reviewed case         | POLICY / CONTROL         |
 |                          |                                                | POL-ATO-03               |
 |                          | AI INFERENCES                                  | POL-OPS-04               |
-|                          | - likely ATO pattern                          |                          |
-|                          | - unauthorized transfer risk high             | ACTIONS                  |
+|                          | - likely ATO pattern based on ....             |                          |
+|                          | - unauthorized transfer risk high              | ACTIONS                  |
 |                          |                                                | [ALLOW]                  |
 |                          | MISSING DATA                                   | [STEP_UP_VERIFY]         |
-|                          | - customer contact confirmation not yet done  | [FREEZE_ACCOUNT]         |
+|                          | - customer contact confirmation not yet done   | [FREEZE_ACCOUNT]         |
 |                          |                                                | [ESCALATE]               |
 |                          | LINKED ACCOUNTS / DEVICES                      |                          |
-|                          | - linked device to prior case                 | [Export Note]            |
+|                          | - linked device to prior case                  | [Export Note]            |
 +--------------------------+------------------------------------------------+--------------------------+
 ```
 
