@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   description: "Seeded-mode, UI-first ATO detection-to-action orchestration demo.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
