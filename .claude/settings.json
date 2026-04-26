@@ -6,7 +6,8 @@
       "Bash(git checkout *)",
       "Bash(npm run *)",
       "WebSearch",
-      "WebFetch(domain:www.unit21.ai)"
+      "WebFetch(domain:www.unit21.ai)",
+      "Bash(npm test *)"
     ],
     "additionalDirectories": [
       "/Users/leongshiwei/SWs_Stuff/04_Career/Hackiedonz/TouchNoGo-finhack/docs"

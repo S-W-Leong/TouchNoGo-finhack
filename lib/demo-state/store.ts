@@ -1,17 +1,12 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from "node:fs";
-import path from "node:path";
-
 import { z } from "zod";
 
+import seedDataJson from "@/seed/demo-core.json";
 import {
   type CaseRecord,
   caseRecordSchema,
   demoDataSchema,
   type DemoData,
 } from "@/lib/domain/schema";
-
-const seedFilePath = path.join(process.cwd(), "seed", "demo-core.json");
-const runtimeFilePath = path.join(process.cwd(), "seed", "runtime-demo-state.json");
 
 const runtimeStateSchema = z.object({
   demoData: demoDataSchema,
@@ -25,38 +20,37 @@ const runtimeStateSchema = z.object({
 
 type RuntimeState = z.infer<typeof runtimeStateSchema>;
 
+let runtimeState: RuntimeState | null = null;
+
 export function getDemoData(): DemoData {
-  return structuredClone(readRuntimeState().demoData);
+  return structuredClone(getRuntimeState().demoData);
 }
 
 export function replaceDemoData(nextData: DemoData) {
   const parsed = demoDataSchema.parse(nextData);
-  const runtimeState = readRuntimeState();
-  runtimeState.demoData = parsed;
-  syncCountersFromDemoData(runtimeState);
-  writeRuntimeState(runtimeState);
-  return structuredClone(runtimeState.demoData);
+  const state = getRuntimeState();
+  state.demoData = parsed;
+  syncCountersFromDemoData(state);
+  return structuredClone(state.demoData);
 }
 
 export function resetDemoState() {
-  const seedData = readSeedData();
-  const runtimeState = createRuntimeState(seedData);
-  writeRuntimeState(runtimeState);
+  runtimeState = createRuntimeState(readSeedData());
   return structuredClone(runtimeState.demoData);
 }
 
 export function getCaseFromState(caseId: string): CaseRecord | null {
-  const record = readRuntimeState().demoData.cases.find((entry) => entry.caseId === caseId);
+  const record = getRuntimeState().demoData.cases.find((entry) => entry.caseId === caseId);
   return record ? structuredClone(record) : null;
 }
 
 export function upsertCaseInState(nextCase: CaseRecord) {
-  const runtimeState = readRuntimeState();
+  const state = getRuntimeState();
   const parsedCase = caseRecordSchema.parse(nextCase);
-  const existingIndex = runtimeState.demoData.cases.findIndex(
+  const existingIndex = state.demoData.cases.findIndex(
     (entry) => entry.caseId === parsedCase.caseId,
   );
-  const nextCases = [...runtimeState.demoData.cases];
+  const nextCases = [...state.demoData.cases];
 
   if (existingIndex >= 0) {
     nextCases[existingIndex] = parsedCase;
@@ -64,46 +58,42 @@ export function upsertCaseInState(nextCase: CaseRecord) {
     nextCases.push(parsedCase);
   }
 
-  runtimeState.demoData.cases = nextCases;
-  syncCountersFromCase(runtimeState, parsedCase);
-  writeRuntimeState(runtimeState);
+  state.demoData.cases = nextCases;
+  syncCountersFromCase(state, parsedCase);
 
   return structuredClone(parsedCase);
 }
 
 export function wasInboundProcessed(eventId: string) {
-  return readRuntimeState().runtime.processedInboundEventIds.includes(eventId);
+  return getRuntimeState().runtime.processedInboundEventIds.includes(eventId);
 }
 
 export function markInboundProcessed(eventId: string) {
-  const runtimeState = readRuntimeState();
+  const state = getRuntimeState();
 
-  if (!runtimeState.runtime.processedInboundEventIds.includes(eventId)) {
-    runtimeState.runtime.processedInboundEventIds.push(eventId);
-    writeRuntimeState(runtimeState);
+  if (!state.runtime.processedInboundEventIds.includes(eventId)) {
+    state.runtime.processedInboundEventIds.push(eventId);
   }
 }
 
 export function wasStatusProcessed(eventId: string) {
-  return readRuntimeState().runtime.processedStatusEventIds.includes(eventId);
+  return getRuntimeState().runtime.processedStatusEventIds.includes(eventId);
 }
 
 export function markStatusProcessed(eventId: string) {
-  const runtimeState = readRuntimeState();
+  const state = getRuntimeState();
 
-  if (!runtimeState.runtime.processedStatusEventIds.includes(eventId)) {
-    runtimeState.runtime.processedStatusEventIds.push(eventId);
-    writeRuntimeState(runtimeState);
+  if (!state.runtime.processedStatusEventIds.includes(eventId)) {
+    state.runtime.processedStatusEventIds.push(eventId);
   }
 }
 
 export function createAuditId(prefix: string) {
-  const runtimeState = readRuntimeState();
-  const current = runtimeState.runtime.countersByPrefix[prefix] ?? 0;
+  const state = getRuntimeState();
+  const current = state.runtime.countersByPrefix[prefix] ?? 0;
   const next = current + 1;
 
-  runtimeState.runtime.countersByPrefix[prefix] = next;
-  writeRuntimeState(runtimeState);
+  state.runtime.countersByPrefix[prefix] = next;
 
   return `${prefix}-${String(next).padStart(3, "0")}`;
 }
@@ -112,49 +102,20 @@ export function nowIso() {
   return new Date().toISOString();
 }
 
-function readRuntimeState() {
-  ensureRuntimeState();
-  return runtimeStateSchema.parse(
-    JSON.parse(readFileSync(runtimeFilePath, "utf8")) as unknown,
-  );
-}
-
-function writeRuntimeState(runtimeState: RuntimeState) {
-  mkdirSync(path.dirname(runtimeFilePath), { recursive: true });
-  const tempFilePath = `${runtimeFilePath}.tmp`;
-
-  writeFileSync(tempFilePath, `${JSON.stringify(runtimeState, null, 2)}\n`, "utf8");
-
-  try {
-    renameSync(tempFilePath, runtimeFilePath);
-  } catch (error) {
-    if (existsSync(tempFilePath)) {
-      unlinkSync(tempFilePath);
-    }
-    throw error;
+function getRuntimeState(): RuntimeState {
+  if (!runtimeState) {
+    runtimeState = createRuntimeState(readSeedData());
   }
-}
-
-function ensureRuntimeState() {
-  if (!existsSync(runtimeFilePath)) {
-    resetDemoState();
-    return;
-  }
-
-  try {
-    runtimeStateSchema.parse(JSON.parse(readFileSync(runtimeFilePath, "utf8")) as unknown);
-  } catch {
-    resetDemoState();
-  }
+  return runtimeState;
 }
 
 function readSeedData() {
-  return demoDataSchema.parse(JSON.parse(readFileSync(seedFilePath, "utf8")) as unknown);
+  return demoDataSchema.parse(seedDataJson);
 }
 
 function createRuntimeState(seedData: DemoData): RuntimeState {
-  const runtimeState: RuntimeState = {
-    demoData: seedData,
+  const state: RuntimeState = {
+    demoData: structuredClone(seedData),
     runtime: {
       processedInboundEventIds: [],
       processedStatusEventIds: [],
@@ -163,27 +124,27 @@ function createRuntimeState(seedData: DemoData): RuntimeState {
     },
   };
 
-  syncCountersFromDemoData(runtimeState);
-  return runtimeState;
+  syncCountersFromDemoData(state);
+  return state;
 }
 
-function syncCountersFromDemoData(runtimeState: RuntimeState) {
-  runtimeState.runtime.countersByPrefix = {
-    ...runtimeState.runtime.countersByPrefix,
+function syncCountersFromDemoData(state: RuntimeState) {
+  state.runtime.countersByPrefix = {
+    ...state.runtime.countersByPrefix,
     AE: findMaxSuffix(
-      runtimeState.demoData.cases.flatMap((record) =>
+      state.demoData.cases.flatMap((record) =>
         record.auditEvents.map((event) => event.eventId),
       ),
       "AE",
     ),
     TL: findMaxSuffix(
-      runtimeState.demoData.cases.flatMap((record) =>
+      state.demoData.cases.flatMap((record) =>
         record.timeline.map((event) => event.eventId),
       ),
       "TL",
     ),
     MSG: findMaxSuffix(
-      runtimeState.demoData.cases
+      state.demoData.cases
         .map((record) => record.prompt.messageSid)
         .filter((value): value is string => Boolean(value)),
       "MSG",
@@ -191,17 +152,17 @@ function syncCountersFromDemoData(runtimeState: RuntimeState) {
   };
 }
 
-function syncCountersFromCase(runtimeState: RuntimeState, record: CaseRecord) {
-  runtimeState.runtime.countersByPrefix.AE = Math.max(
-    runtimeState.runtime.countersByPrefix.AE ?? 0,
+function syncCountersFromCase(state: RuntimeState, record: CaseRecord) {
+  state.runtime.countersByPrefix.AE = Math.max(
+    state.runtime.countersByPrefix.AE ?? 0,
     findMaxSuffix(record.auditEvents.map((event) => event.eventId), "AE"),
   );
-  runtimeState.runtime.countersByPrefix.TL = Math.max(
-    runtimeState.runtime.countersByPrefix.TL ?? 0,
+  state.runtime.countersByPrefix.TL = Math.max(
+    state.runtime.countersByPrefix.TL ?? 0,
     findMaxSuffix(record.timeline.map((event) => event.eventId), "TL"),
   );
-  runtimeState.runtime.countersByPrefix.MSG = Math.max(
-    runtimeState.runtime.countersByPrefix.MSG ?? 0,
+  state.runtime.countersByPrefix.MSG = Math.max(
+    state.runtime.countersByPrefix.MSG ?? 0,
     findMaxSuffix(record.prompt.messageSid ? [record.prompt.messageSid] : [], "MSG"),
   );
 }
