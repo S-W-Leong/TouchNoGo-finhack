@@ -1,4 +1,4 @@
-# Design System - TNG RiskOps Agent
+# Design System -  TNG RiskOps Agent
 
 ## Product Context
 - **What this is:** A seeded, operator-facing risk workspace for account takeover and unauthorized transaction investigations.
